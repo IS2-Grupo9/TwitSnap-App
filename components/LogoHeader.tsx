@@ -1,11 +1,17 @@
 import React from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import { View, Image, Text, StyleSheet, ViewProps } from 'react-native';
+
+export type LogoHeaderProps = ViewProps & {
+  small?: boolean;
+};
 
 export function LogoHeader(
-  { small = false }: { small?: boolean }
+  { small = false,
+    style,
+  }: LogoHeaderProps
 ) {
   return (
-    <View style={styles.container}>
+    <View style={[small ? styles.containerSmall : styles.container, style]}>
       <Image
         style={small ? styles.logoSmall : styles.logo}
         source={require('../assets/images/logo-twitsnap.png')}
@@ -16,9 +22,10 @@ export function LogoHeader(
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: 20 },
-  logo: { width: 100, height: 100 },
-  logoSmall: { width: 50, height: 50 },
-  title: { fontSize: 24, marginTop: 16 },
-  titleSmall: { fontSize: 18 },
+  container: { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 10 },
+  containerSmall: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10 },
+  logo: { width: 200, height: 200, marginBottom: -30 },
+  logoSmall: { width: 80, height: 80, marginRight: 10 },
+  title: { fontSize: 48, marginTop: 16, fontWeight: 'bold' , color: 'white'},
+  titleSmall: { fontSize: 40 , fontWeight: 'bold' , color: 'white'},
 });

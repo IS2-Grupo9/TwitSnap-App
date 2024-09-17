@@ -1,17 +1,26 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, NavigationContainer, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import 'react-native-reanimated';
-
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { PaperProvider } from 'react-native-paper';
+import TabLayout from './(tabs)/_layout';
+import { AuthContext } from '@/components/contexts/AuthContext';
+import CreateAccount from './screens/create-account';
+import Register from './screens/register';
+import Welcome from './screens/welcome';
+
+import { useFonts } from 'expo-font';
+
+const RootStack = createNativeStackNavigator();
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const { auth } = useContext(AuthContext);
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -27,14 +36,20 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="create-account" options={{ headerShown: false }} />
-        <Stack.Screen name="register" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <PaperProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          {auth && auth.token ? (
+            <RootStack.Screen name="(tabs)" component={TabLayout} />
+          ) : (
+            <>
+              <RootStack.Screen name="screens/welcome" component={Welcome} />
+              <RootStack.Screen name="screens/register" component={Register} />
+              <RootStack.Screen name="screens/create-account" component={CreateAccount} />
+            </>
+          )}
+        </RootStack.Navigator>
+      </ThemeProvider>
+    </PaperProvider>
   );
 }
