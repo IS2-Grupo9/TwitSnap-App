@@ -16,7 +16,7 @@ const Welcome = () => {
         <LogoHeader />
         <View style={styles.divider} />
         <Text style={styles.title}>Join now!</Text>
-        <Button onPress={() => router.push('/screens/create-account')} 
+        <Button onPress={() => router.push('./create-account')} 
           mode="contained" 
           buttonColor='#1E1E1E'
           textColor='#FFFFFF'
@@ -25,7 +25,7 @@ const Welcome = () => {
         </Button>
         <View style={styles.divider} />
         <Text style={styles.subtitle}>Already have an account?</Text>
-        <Button onPress={() => router.push('/screens/login')}
+        <Button onPress={() => router.push('./login')}
           mode="contained"
           buttonColor='#65558F'
           textColor='#FFFFFF'

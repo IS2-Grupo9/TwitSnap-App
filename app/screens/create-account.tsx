@@ -31,7 +31,7 @@ const CreateAccount = () => {
         <Text style={styles.text}>or</Text>
         <View style={styles.divider} />
       </View>
-      <Button onPress={() => router.push('/screens/email-register')}
+      <Button onPress={() => router.push('./email-register')}
           mode="contained"
           buttonColor='#65558F'
           textColor='#FFFFFF'

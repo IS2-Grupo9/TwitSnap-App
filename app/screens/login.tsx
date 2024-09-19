@@ -31,7 +31,7 @@ const Login = () => {
         <Text style={styles.text}>or</Text>
         <View style={styles.divider} />
       </View>
-      <Button onPress={() => router.push('/screens/email-login')}
+      <Button onPress={() => router.push('./email-login')}
           mode="contained"
           buttonColor='#65558F'
           textColor='#FFFFFF'

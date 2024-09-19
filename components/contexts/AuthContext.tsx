@@ -1,64 +1,52 @@
-import { createContext } from 'react';
-import { useEffect, useState } from 'react';
-import { ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const AuthContext = createContext<AuthContextType>({
-  auth: null,
-  setAuth: async () => {},
-});
-
-type Auth = {
-  token: string,
-  email: string,
-};
+interface AuthState {
+  token: string | null;
+}
 
 interface AuthContextType {
-  auth: Auth | null;
-  setAuth: (auth: Auth | null) => Promise<void>;
+  auth: AuthState;
+  login: (token: string) => void;
+  logout: () => void;
 }
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthProvider = ({ children }: AuthProviderProps) => {
-    const [auth, setAuthState] = useState<Auth | null>(null);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [auth, setAuth] = useState<AuthState>({ token: null });
 
-    const getAuthState = async () => {
-      try {
-        const authDataString = await AsyncStorage.getItem('auth');
-        const authData = JSON.parse(authDataString || '');
-        setAuthState(authData);
-      } catch (error) {
-        setAuthState(null);
+  const login = async (token: string) => {
+    await AsyncStorage.setItem('authToken', token);
+    setAuth({ token });
+  };
+
+  const logout = async () => {
+    await AsyncStorage.removeItem('authToken');
+    setAuth({ token: null });
+  };
+
+  useEffect(() => {
+    const loadToken = async () => {
+      const storedToken = await AsyncStorage.getItem('authToken');
+      if (storedToken) {
+        setAuth({ token: storedToken });
       }
     };
+    loadToken();
+  }, []);
 
-    const setAuth = async (auth: Auth | null) => {
-      try {
-        if (auth) {
-          await AsyncStorage.setItem('auth', JSON.stringify(auth));
-          console.log('Auth set');
-        } else {
-          await AsyncStorage.removeItem('auth');
-        }
-        setAuthState(auth);
-      } catch (error) {
-        return Promise.reject(error);
-      }
-      };
-
-    useEffect(() => {
-      getAuthState();
-    }, []);
-
-    return (
-      <AuthContext.Provider value={{ auth, setAuth }}>
-        {children}
-      </AuthContext.Provider>
-    );
-
+  return (
+    <AuthContext.Provider value={{ auth, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export { AuthContext, AuthProvider };
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

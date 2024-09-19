@@ -1,23 +1,21 @@
-import { useRouter } from 'expo-router';
 import { useContext, useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoHeader } from '@/components/LogoHeader';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AuthContext } from '@/components/contexts/AuthContext';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 const EmailLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
-  const { auth, setAuth } = useContext(AuthContext);
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     // Login logic, for now set a dummy token
     console.log('Logging in');
-    await setAuth({ token: 'token', email: 'email'});
-    console.log(auth);
+    await login('dummy-token');
   }
 
   return (

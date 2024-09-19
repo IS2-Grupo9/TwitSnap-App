@@ -16,7 +16,7 @@ const EmailRegister = () => {
 
   const handleRegister = async () => {
     // Register user logic, for now redirect to login
-    router.push('/screens/login');
+    router.push('./login');
   }
 
   return (
