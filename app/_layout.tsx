@@ -1,17 +1,18 @@
 import { DarkTheme, DefaultTheme, NavigationContainer, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PaperProvider } from 'react-native-paper';
-import TabLayout from './(tabs)/_layout';
-import { AuthContext } from '@/components/contexts/AuthContext';
-import CreateAccount from './screens/create-account';
-import Register from './screens/register';
-import Welcome from './screens/welcome';
-
+import { AuthContext, AuthProvider } from '@/components/contexts/AuthContext';
 import { useFonts } from 'expo-font';
+import TabLayout from './(tabs)/_layout';
+import CreateAccount from './screens/create-account';
+import Welcome from './screens/welcome';
+import Login from './screens/login';
+import EmailRegister from './screens/email-register';
+import EmailLogin from './screens/email-login';
 
 const RootStack = createNativeStackNavigator();
 
@@ -36,20 +37,24 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <RootStack.Navigator screenOptions={{ headerShown: false }}>
-          {auth && auth.token ? (
-            <RootStack.Screen name="(tabs)" component={TabLayout} />
-          ) : (
-            <>
-              <RootStack.Screen name="screens/welcome" component={Welcome} />
-              <RootStack.Screen name="screens/register" component={Register} />
-              <RootStack.Screen name="screens/create-account" component={CreateAccount} />
-            </>
-          )}
-        </RootStack.Navigator>
-      </ThemeProvider>
-    </PaperProvider>
+    <AuthProvider>
+      <PaperProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            {(auth && auth.token) ? (
+              <RootStack.Screen name="(tabs)" component={TabLayout} />
+            ) : (
+              <>
+                <RootStack.Screen name="screens/welcome" component={Welcome} />
+                <RootStack.Screen name="screens/create-account" component={CreateAccount} />
+                <RootStack.Screen name="screens/login" component={Login} />
+                <RootStack.Screen name="screens/email-register" component={EmailRegister} />
+                <RootStack.Screen name="screens/email-login" component={EmailLogin} />
+              </>
+            )}
+          </RootStack.Navigator>
+        </ThemeProvider>
+      </PaperProvider>
+    </AuthProvider>
   );
 }

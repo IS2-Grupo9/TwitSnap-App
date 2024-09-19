@@ -25,7 +25,7 @@ const Welcome = () => {
         </Button>
         <View style={styles.divider} />
         <Text style={styles.subtitle}>Already have an account?</Text>
-        <Button
+        <Button onPress={() => router.push('/screens/login')}
           mode="contained"
           buttonColor='#65558F'
           textColor='#FFFFFF'

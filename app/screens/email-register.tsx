@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoHeader } from '@/components/LogoHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const Register = () => {
+const EmailRegister = () => {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,6 +15,8 @@ const Register = () => {
   const router = useRouter();
 
   const handleRegister = async () => {
+    // Register user logic, for now redirect to login
+    router.push('/screens/login');
   }
 
   return (
@@ -120,4 +122,4 @@ const styles = StyleSheet.create({
   button: { marginVertical: 20, marginHorizontal: 40 },
 });
   
-export default Register;
+export default EmailRegister;

@@ -4,7 +4,7 @@ import { Button, Icon } from 'react-native-paper';
 import { LogoHeader } from '@/components/LogoHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const CreateAccount = () => {
+const Login = () => {
   const router = useRouter();
 
   return (
@@ -14,7 +14,7 @@ const CreateAccount = () => {
           end={{ x: 0.5, y: 1 }}
           style= {styles.container}>
       <LogoHeader small={true} style={styles.logo}/>
-      <Text style={styles.title}>Create an account:</Text>
+      <Text style={styles.title}>Log In:</Text>
       <Button
           mode="contained"
           buttonColor='#FFFFFF'
@@ -23,7 +23,7 @@ const CreateAccount = () => {
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
               <Image source={require('@/assets/images/google-icon.png')}
                 style={{width: 20, height: 20, marginRight: 10}} />
-              <Text>Sign Up with Google</Text>
+              <Text>Log In with Google</Text>
             </View>
       </Button>
       <View style={styles.dividerWrapper}>
@@ -31,12 +31,12 @@ const CreateAccount = () => {
         <Text style={styles.text}>or</Text>
         <View style={styles.divider} />
       </View>
-      <Button onPress={() => router.push('/screens/email-register')}
+      <Button onPress={() => router.push('/screens/email-login')}
           mode="contained"
           buttonColor='#65558F'
           textColor='#FFFFFF'
           style = {styles.button}>
-          Sign Up with email
+          Log In with email
       </Button>
     </LinearGradient>
   );
@@ -53,4 +53,4 @@ const styles = StyleSheet.create({
   button: { marginHorizontal: 40 },
 });
   
-export default CreateAccount;
+export default Login;
