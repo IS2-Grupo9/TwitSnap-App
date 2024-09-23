@@ -1,39 +1,60 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+interface User {
+  id: number;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AuthState {
   token: string | null;
+  user: User | null;
 }
 
 interface AuthContextType {
   auth: AuthState;
-  login: (token: string) => void;
+  login: (authData: AuthState) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [auth, setAuth] = useState<AuthState>({ token: null });
+  const [auth, setAuth] = useState<AuthState>({ token: null, user: null });
 
-  const login = async (token: string) => {
-    await AsyncStorage.setItem('authToken', token);
-    setAuth({ token });
+  const login = async (authData: AuthState) => {
+    try {
+      // Save the entire auth data object as a JSON string
+      await AsyncStorage.setItem('authData', JSON.stringify(authData));
+      setAuth(authData);
+    } catch (error) {
+      console.error('Error storing auth data:', error);
+    }
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('authToken');
-    setAuth({ token: null });
+    try {
+      await AsyncStorage.removeItem('authData');
+      setAuth({ token: null, user: null });
+    } catch (error) {
+      console.error('Error clearing auth data:', error);
+    }
   };
 
   useEffect(() => {
-    const loadToken = async () => {
-      const storedToken = await AsyncStorage.getItem('authToken');
-      if (storedToken) {
-        setAuth({ token: storedToken });
+    const loadAuthData = async () => {
+      try {
+        const storedAuthData = await AsyncStorage.getItem('authData');
+        if (storedAuthData) {
+          setAuth(JSON.parse(storedAuthData));
+        }
+      } catch (error) {
+        console.error('Error loading auth data:', error);
       }
     };
-    loadToken();
+    loadAuthData();
   }, []);
 
   return (

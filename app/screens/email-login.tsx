@@ -10,12 +10,50 @@ const EmailLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
+  const [emailError, setEmailError] = useState(false);
   const { login } = useAuth();
+  const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+
+  const validateEmail = (email : string) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
 
   const handleLogin = async () => {
-    // Login logic, for now set a dummy token
-    console.log('Logging in');
-    await login('dummy-token');
+    try {
+      if (!email || !password) {
+        alert('All fields are required');
+        return;
+      }
+  
+      if (!validateEmail(email)) {
+        alert('Invalid email address');
+        return;
+      }
+  
+      const response = await fetch(`${apiUrl}/users/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Invalid email or password. Please try again.'}`);
+        return;
+      }
+  
+      const data = await response.json();
+      login({ token: data.token, user: data.user });
+    } catch (error : any) {
+      alert(`An unexpected error occurred: ${error.message}`);
+      console.error('Login Error:', error);
+    }
   }
 
   return (
@@ -39,10 +77,18 @@ const EmailLogin = () => {
             theme = {{
               colors: {
                 onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
+                error: 'red',
               },
             }}
-            onChangeText={setEmail}
+            error={emailError}
+            onChangeText={(text) => {
+              setEmail(text);
+              setEmailError(!validateEmail(text));
+            }}
         />
+        {emailError && (
+          <Text style={styles.errorText}>Please enter a valid email address.</Text>
+        )}
         <TextInput
             mode="flat"
             right={<TextInput.Icon 
@@ -82,6 +128,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, textAlign: 'center', color: 'black', marginBottom: 10 },
   input: { marginVertical: 10, backgroundColor: 'transparent'},
   button: { marginVertical: 20, marginHorizontal: 40 },
+  errorText: { color: 'red', marginBottom: 10, textAlign: 'center' },
 });
   
 export default EmailLogin;

@@ -12,12 +12,53 @@ const EmailRegister = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
+  const [emailError, setEmailError] = useState(false);
   const router = useRouter();
+  const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+
+  const validateEmail = (email : string) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
 
   const handleRegister = async () => {
-    // Register user logic, for now redirect to login
-    router.push('./login');
-  }
+    try {
+      if (!userName || !email || !password || !confirmPassword) {
+        alert('All fields are required');
+        return;
+      }
+      if (!validateEmail(email)) {
+        alert('Invalid email address');
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+  
+      const response = await fetch(`${apiUrl}/users/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: userName,
+          email: email,
+          password: password,
+        }),
+      });
+  
+      if (response.ok) {
+        alert('Account created successfully. Please log in.');
+        router.push('./login');
+      } else {
+        const errorData = await response.json();
+        alert(`An error occurred: ${errorData.message || 'Please try again.'}`);
+      }
+    } catch (error : any) {
+      alert(`An unexpected error occurred: ${error.message}`);
+    }
+  };
 
   return (
     <LinearGradient
@@ -56,10 +97,18 @@ const EmailRegister = () => {
             theme = {{
               colors: {
                 onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
+                error: 'red',
               },
             }}
-            onChangeText={setEmail}
+            error={emailError}
+            onChangeText={(text) => {
+              setEmail(text);
+              setEmailError(!validateEmail(text));
+            }}
         />
+        {emailError && (
+          <Text style={styles.errorText}>Please enter a valid email address.</Text>
+        )}
         <TextInput
             mode="flat"
             right={<TextInput.Icon 
@@ -120,6 +169,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, textAlign: 'center', color: 'black', marginBottom: 10 },
   input: { marginVertical: 10, backgroundColor: 'transparent'},
   button: { marginVertical: 20, marginHorizontal: 40 },
+  errorText: { color: 'red', marginBottom: 10, textAlign: 'center' },
 });
   
 export default EmailRegister;
