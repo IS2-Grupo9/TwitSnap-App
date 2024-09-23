@@ -13,6 +13,7 @@ import Welcome from './screens/welcome';
 import Login from './screens/login';
 import EmailRegister from './screens/email-register';
 import EmailLogin from './screens/email-login';
+import ProfileScreen from './screens/profile';
 
 const RootStack = createNativeStackNavigator();
 
@@ -41,7 +42,10 @@ const RootLayout: React.FC = () => {
       <PaperProvider>
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {auth.token ? (
-            <RootStack.Screen name="(tabs)" component={TabLayout} />
+            <>
+              <RootStack.Screen name="(tabs)" component={TabLayout} />
+              <RootStack.Screen name="screens/profile" component={ProfileScreen} />
+            </>
           ) : (
             <>
               <RootStack.Screen name="screens/welcome" component={Welcome} />
