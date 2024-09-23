@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function ExploreScreen() {
+export default function ChatScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Explore</Text>
-      <Text style={styles.subtitle}>This is the explore screen</Text>
+      <Text style={styles.title}>Chat</Text>
+      <Text style={styles.subtitle}>This is the chat screen</Text>
     </View>
   );
 }
