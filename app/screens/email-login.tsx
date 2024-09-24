@@ -1,6 +1,6 @@
-import { useContext, useState } from 'react';
-import { Text, StyleSheet, View, ActivityIndicator } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import { useState } from 'react';
+import { Text, StyleSheet } from 'react-native';
+import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/components/contexts/AuthContext';
