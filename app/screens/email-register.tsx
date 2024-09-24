@@ -7,7 +7,7 @@ import { LogoHeader } from '@/components/LogoHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 
 type EmailRegisterProps = {
-  showSnackbar: (message: string) => void;
+  showSnackbar: (message: string, type: string) => void;
 };
 
 const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
@@ -28,17 +28,17 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
 
   const handleRegister = async () => {
     if (!userName || !email || !password || !confirmPassword) {
-      showSnackbar('All fields are required');
+      showSnackbar('All fields are required.', 'error');
       return;
     }
 
     if (!validateEmail(email)) {
-      showSnackbar('Invalid email address');
+      showSnackbar('Invalid email address.', 'error');
       return;
     }
 
     if (password !== confirmPassword) {
-      showSnackbar('Passwords do not match');
+      showSnackbar('Passwords do not match.', 'error');
       return;
     }
 
@@ -58,14 +58,14 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
       });
 
       if (response.ok) {
-        showSnackbar('Account created successfully. Please log in.');
+        showSnackbar('Account created successfully. Please log in.', 'success');
         router.push('./login');
       } else {
         const errorData = await response.json();
-        showSnackbar(`An error occurred: ${errorData.message || 'Please try again.'}`);
+        showSnackbar(`An error occurred: ${errorData.message || 'Please try again.'}`, 'error');
       }
     } catch (error: any) {
-      showSnackbar(`An unexpected error occurred: ${error.message}`);
+      showSnackbar(`An unexpected error occurred: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }

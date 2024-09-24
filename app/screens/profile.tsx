@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const placeholderInterests = ['#coding', '#gaming', '#reading', '#cooking', '#music', '#sports', '#travel', '#photography', '#art', '#movies'];
 
 interface ProfileScreenProps {
-  showSnackbar: (message: string) => void; // Prop for showing snackbars
+  showSnackbar: (message: string, type: string) => void;
 }
 
 export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
@@ -43,7 +43,7 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
     setLoadingEdit(true);
     try {
       if (!usernameInput) {
-        showSnackbar('Username is required.');
+        showSnackbar('Username is required.', 'error');
         return;
       }
       
@@ -63,12 +63,12 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
 
       if (response.ok) {
         fetchProfile();
-        showSnackbar('Profile updated successfully!');
+        showSnackbar('Profile updated successfully!', 'success');
       } else {
-        showSnackbar('Failed to update profile. Please try again.');
+        showSnackbar('Failed to update profile. Please try again.', 'error');
       }
     } catch (error) {
-      showSnackbar('An error occurred. Please try again later.');
+      showSnackbar('An error occurred. Please try again later.', 'error');
     } finally {
       setLoadingEdit(false);
       setModalVisible(false);
@@ -96,10 +96,10 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
         setUpdatedAt(data.updatedAt);
         // TODO: Set location and interests
       } else {
-        showSnackbar('Failed to fetch profile data. Please try again.'); // Use showSnackbar here
+        showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
     } catch (error) {
-      showSnackbar('An error occurred. Please try again later.'); // Use showSnackbar here
+      showSnackbar('An error occurred. Please try again later.', 'error');
     } finally {
       setLoadingProfile(false);
     }

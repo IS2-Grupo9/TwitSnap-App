@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { PaperProvider, Snackbar } from 'react-native-paper';
@@ -25,12 +25,14 @@ const RootLayout: React.FC = () => {
   const colorScheme = useColorScheme();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarType, setSnackbarType] = useState('success');
   const { auth } = useAuth();
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const showSnackbar = (message: string) => {
+  const showSnackbar = (message: string, type: string) => {
+    setSnackbarType(type);
     setSnackbarMessage(message);
     setSnackbarVisible(true);
   };
@@ -74,8 +76,11 @@ const RootLayout: React.FC = () => {
           visible={snackbarVisible}
           onDismiss={() => setSnackbarVisible(false)}
           duration={3000}
-          style={styles.snackbar}>
-          {snackbarMessage}
+          style={styles.snackbar}
+          theme={{ colors: { accent: snackbarType === 'error' ? 'red' : 'green' } }}>
+          <Text style={[styles.snackbarText, { color: snackbarType === 'error' ? 'red' : 'green' }]}>
+            {snackbarMessage}
+          </Text>
         </Snackbar>
       </PaperProvider>
     </ThemeProvider>
@@ -97,6 +102,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     width: '90%',
+  },
+  snackbarText: {
+    fontWeight: 'bold',
   },
 });
 

@@ -7,7 +7,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { LogoHeader } from '@/components/LogoHeader';
 
 type EmailLoginProps = {
-  showSnackbar: (message: string) => void;
+  showSnackbar: (message: string, type: string) => void;
 };
 
 const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
@@ -27,12 +27,12 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
   const handleLogin = async () => {
     try {
       if (!email || !password) {
-        showSnackbar('All fields are required');
+        showSnackbar('All fields are required.', 'error');
         return;
       }
 
       if (!validateEmail(email)) {
-        showSnackbar('Invalid email address');
+        showSnackbar('Invalid email address.', 'error');
         return;
       }
 
@@ -50,7 +50,7 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        showSnackbar(errorData.message || 'Invalid email or password. Please try again.');
+        showSnackbar(errorData.message || 'Invalid email or password. Please try again.', 'error');
         setLoading(false);
         return;
       }
@@ -59,7 +59,7 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
       login({ token: data.token, user: data.user });
       setLoading(false);
     } catch (error: any) {
-      showSnackbar(`An unexpected error occurred: ${error.message}`);
+      showSnackbar(`An unexpected error occurred: ${error.message}`, 'error');
       console.error('Login Error:', error);
       setLoading(false);
     }
