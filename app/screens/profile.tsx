@@ -7,7 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const placeholderInterests = ['#coding', '#gaming', '#reading', '#cooking', '#music', '#sports', '#travel', '#photography', '#art', '#movies'];
 
-export default function ProfileScreen() {
+interface ProfileScreenProps {
+  showSnackbar: (message: string) => void; // Prop for showing snackbars
+}
+
+export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
   const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [isModalVisible, setModalVisible] = useState(false);
@@ -18,14 +22,14 @@ export default function ProfileScreen() {
   const [updatedAt, setUpdatedAt] = useState('');
   const [location, setLocation] = useState('Not specified');
   const [locationInput, setLocationInput] = useState(location);
-  const [interests, setInterests] = useState(placeholderInterests); // Placeholder interests
+  const [interests, setInterests] = useState(placeholderInterests);
   const [interestInput, setInterestInput] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
-  const formatDate = (dateString : string | undefined) => {
+  const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
-    const options: Intl.DateTimeFormatOptions = { 
+    const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric',
@@ -38,6 +42,11 @@ export default function ProfileScreen() {
   const handleProfileEdit = async () => {
     setLoadingEdit(true);
     try {
+      if (!usernameInput) {
+        showSnackbar('Username is required.');
+        return;
+      }
+      
       const response = await fetch(`${apiUrl}/users/profile`, {
         method: 'PUT',
         headers: {
@@ -54,12 +63,12 @@ export default function ProfileScreen() {
 
       if (response.ok) {
         fetchProfile();
-        alert('Profile updated successfully!');
+        showSnackbar('Profile updated successfully!');
       } else {
-        alert('Failed to update profile. Please try again.');
+        showSnackbar('Failed to update profile. Please try again.');
       }
     } catch (error) {
-      alert('An error occurred. Please try again later.');
+      showSnackbar('An error occurred. Please try again later.');
     } finally {
       setLoadingEdit(false);
       setModalVisible(false);
@@ -87,13 +96,11 @@ export default function ProfileScreen() {
         setUpdatedAt(data.updatedAt);
         // TODO: Set location and interests
       } else {
-        alert('Failed to fetch profile data. Please try again.');
+        showSnackbar('Failed to fetch profile data. Please try again.'); // Use showSnackbar here
       }
-    }
-    catch (error) {
-      alert('An error occurred. Please try again later.');
-    }
-    finally {
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.'); // Use showSnackbar here
+    } finally {
       setLoadingProfile(false);
     }
   };
@@ -120,13 +127,13 @@ export default function ProfileScreen() {
             <ScrollView horizontal={true} style={styles.chipContainer}>
               {interests.map((interest, index) => (
                 <Chip
-                key={index}
-                style={styles.chip}
-                textStyle={{ color: '#65558F' }}
-                mode="outlined"
-              >
-                {interest}
-              </Chip>
+                  key={index}
+                  style={styles.chip}
+                  textStyle={{ color: '#65558F' }}
+                  mode="outlined"
+                >
+                  {interest}
+                </Chip>
               ))}
             </ScrollView>
             <Button
@@ -200,19 +207,17 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, fontWeight: 'bold', color: '#65558F', textAlign: 'center', marginTop: 10 },
   editButton: { marginTop: 20, paddingHorizontal: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#65558F', marginTop: 20, textAlign: 'left' },
-
   chipContainer: { 
     flexDirection: 'row', 
     marginTop: 10,
     maxHeight: 40,
   },
   chip: { backgroundColor: '#EADDFF', marginRight: 5, color: '#65558F' },
-
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
   modalContent: { width: 300, padding: 20, backgroundColor: '#ffffff', borderRadius: 10, alignItems: 'center' },
   modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   input: { width: '100%', padding: 10, marginVertical: 10, borderColor: '#cccccc', borderWidth: 1, borderRadius: 5 },
-  inputLabel: { textAlign: 'left', width: '100%', color: '#65558F', fontWeight: 'bold', marginTop: 10 },
-  modalButton: { marginVertical: 10, width: '100%' },
+  inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold' },
+  modalButton: { marginTop: 20, paddingHorizontal: 20 },
   cancelButton: { marginTop: 10 },
 });

@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
-import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
+import { TextInput, Button, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LogoHeader } from '@/components/LogoHeader';
 
-const EmailLogin = () => {
+type EmailLoginProps = {
+  showSnackbar: (message: string) => void;
+};
+
+const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
@@ -23,12 +27,12 @@ const EmailLogin = () => {
   const handleLogin = async () => {
     try {
       if (!email || !password) {
-        alert('All fields are required');
+        showSnackbar('All fields are required');
         return;
       }
 
       if (!validateEmail(email)) {
-        alert('Invalid email address');
+        showSnackbar('Invalid email address');
         return;
       }
 
@@ -46,7 +50,7 @@ const EmailLogin = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Invalid email or password. Please try again.'}`);
+        showSnackbar(errorData.message || 'Invalid email or password. Please try again.');
         setLoading(false);
         return;
       }
@@ -55,7 +59,7 @@ const EmailLogin = () => {
       login({ token: data.token, user: data.user });
       setLoading(false);
     } catch (error: any) {
-      alert(`An unexpected error occurred: ${error.message}`);
+      showSnackbar(`An unexpected error occurred: ${error.message}`);
       console.error('Login Error:', error);
       setLoading(false);
     }

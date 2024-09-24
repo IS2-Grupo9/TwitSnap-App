@@ -1,12 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
-import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
+import { TextInput, Button, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoHeader } from '@/components/LogoHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const EmailRegister = () => {
+type EmailRegisterProps = {
+  showSnackbar: (message: string) => void;
+};
+
+const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,17 +28,17 @@ const EmailRegister = () => {
 
   const handleRegister = async () => {
     if (!userName || !email || !password || !confirmPassword) {
-      alert('All fields are required');
+      showSnackbar('All fields are required');
       return;
     }
 
     if (!validateEmail(email)) {
-      alert('Invalid email address');
+      showSnackbar('Invalid email address');
       return;
     }
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      showSnackbar('Passwords do not match');
       return;
     }
 
@@ -54,14 +58,14 @@ const EmailRegister = () => {
       });
 
       if (response.ok) {
-        alert('Account created successfully. Please log in.');
+        showSnackbar('Account created successfully. Please log in.');
         router.push('./login');
       } else {
         const errorData = await response.json();
-        alert(`An error occurred: ${errorData.message || 'Please try again.'}`);
+        showSnackbar(`An error occurred: ${errorData.message || 'Please try again.'}`);
       }
     } catch (error: any) {
-      alert(`An unexpected error occurred: ${error.message}`);
+      showSnackbar(`An unexpected error occurred: ${error.message}`);
     } finally {
       setLoading(false);
     }
