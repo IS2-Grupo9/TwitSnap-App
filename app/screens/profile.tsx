@@ -6,7 +6,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
-  const { auth, login } = useAuth();
+  const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [isModalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState('');
@@ -43,8 +43,7 @@ export default function ProfileScreen() {
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        login({ ...auth, user: updatedUser });
+        fetchProfile();
         alert('Profile updated successfully!');
       } else {
         alert('Failed to update profile. Please try again.');
@@ -56,7 +55,7 @@ export default function ProfileScreen() {
       setModalVisible(false);
     }
   };
-  {/*
+
   const fetchProfile = async () => {
     setLoadingProfile(true);
     try {
@@ -65,7 +64,9 @@ export default function ProfileScreen() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${auth.token}`,
-        },
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        }
       });
       if (response.ok) {
         const data = await response.json();
@@ -88,7 +89,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     fetchProfile();
   }, []);
-  */}
+
   return (
     <>
       <TopBar type='back' />
@@ -101,10 +102,10 @@ export default function ProfileScreen() {
         ) : 
         (<View style={styles.avatarContainer}>
           <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
-          <Text style={styles.title}>{auth?.user?.username}</Text>
-          {/*<Text style={styles.subtitle}>{email}</Text>*/}
-          <Text style={styles.subtitle}>Join date: {formatDate(auth?.user?.createdAt)}</Text>
-          <Text style={styles.subtitle}>Last updated: {formatDate(auth?.user?.updatedAt)}</Text>
+          <Text style={styles.title}>{username}</Text>
+          <Text style={styles.subtitle}>{email}</Text>
+          <Text style={styles.subtitle}>Join date: {formatDate(createdAt)}</Text>
+          <Text style={styles.subtitle}>Last updated: {formatDate(updatedAt)}</Text>
           <Button
             mode="contained"
             onPress={() => setModalVisible(true)}
