@@ -5,8 +5,6 @@ import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const placeholderInterests = ['#coding', '#gaming', '#reading', '#cooking', '#music', '#sports', '#travel', '#photography', '#art', '#movies'];
-
 interface ProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
 }
@@ -22,7 +20,7 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
   const [updatedAt, setUpdatedAt] = useState('');
   const [location, setLocation] = useState('Not specified');
   const [locationInput, setLocationInput] = useState(location);
-  const [interests, setInterests] = useState(placeholderInterests);
+  const [interests, setInterests] = useState([]);
   const [interestInput, setInterestInput] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
@@ -55,9 +53,8 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
         },
         body: JSON.stringify({
           username: usernameInput,
-          // TODO: Add location and interests to the request body
-          // location: locationInput,
-          // interests: interestInput.split(',').map((interest) => interest.trim()),
+          location: locationInput,
+          interests: interestInput,
         }),
       });
 
@@ -94,7 +91,11 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
         setEmail(data.email);
         setCreatedAt(data.createdAt);
         setUpdatedAt(data.updatedAt);
-        // TODO: Set location and interests
+        setLocation(data.location || 'Not specified');
+        setLocationInput(data.location || 'Not specified');
+        const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
+        setInterests(interests);
+        setInterestInput(data.interests ? interests.join(', ') : '');
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
