@@ -3,33 +3,25 @@ import { ScrollView, StyleSheet, Image } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
-interface Post {
+interface Snap {
   ID: number;
   message: string;
-  userId: number;
   user: string;
   createdAt: string;
   updatedAt: string;
   liked: boolean;
 }
 
-// Placeholder users data
-const users = [
-  { id: 1, username: 'Juan' },
-  { id: 2, username: 'Pepe' },
-  { id: 3, username: 'Carlos' },
-];
-
-// Placeholder posts
-const placeholderPosts = [
-  { ID: 4, userId: 1, createdAt: '2024-09-29T15:45:33', updatedAt: '2024-09-29T15:45:33', message: 'Fourth post!' },
-  { ID: 3, userId: 1, createdAt: '2024-09-29T15:40:21', updatedAt: '2024-09-29T15:40:21', message: 'Third post!' },
-  { ID: 2, userId: 2, createdAt: '2024-09-28T14:22:10', updatedAt: '2024-09-28T14:22:10', message: 'Second post!' },
-  { ID: 1, userId: 3, createdAt: '2024-09-27T13:12:05', updatedAt: '2024-09-27T13:12:05', message: 'First!' },
+// Placeholder snaps
+const placeholderSnaps = [
+  { ID: 4, user: 1, createdAt: '2024-09-29T15:45:33', updatedAt: '2024-09-29T15:45:33', message: 'Fourth post!' },
+  { ID: 3, user: 1, createdAt: '2024-09-29T15:40:21', updatedAt: '2024-09-29T15:40:21', message: 'Third post!' },
+  { ID: 2, user: 2, createdAt: '2024-09-28T14:22:10', updatedAt: '2024-09-28T14:22:10', message: 'Second post!' },
+  { ID: 1, user: 3, createdAt: '2024-09-27T13:12:05', updatedAt: '2024-09-27T13:12:05', message: 'First!' },
 ];
 
 export default function HomeScreen() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [snaps, setSnaps] = useState<Snap[]>([]);
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -45,42 +37,40 @@ export default function HomeScreen() {
 
   const fetchUserById = (userId: number) => {
     // Fetch user by ID from the placeholder users data
-    return users.find(user => user.id === userId)?.username || 'Unknown';
   };
 
-  const fetchPosts = () => {
-    const completePosts = placeholderPosts.map(post => {
+  const fetchSnaps = () => {
+    const completeSnaps = placeholderSnaps.map(snap => {
       return {
-        ...post,
-        user: fetchUserById(post.userId),
+        ...snap,
         liked: false,
       };
     });
-    setPosts(completePosts);
+    setSnaps(completeSnaps);
   };
   
-  const handleLikePost = (postId: number) => {
-    // TODO: Like post through interactions API
-    const updatedPosts = posts.map(post => {
-      if (post.ID === postId) {
-        return { ...post, liked: !post.liked };
+  const handleLikeSnap = (snapId: number) => {
+    // TODO: Like snap through interactions API
+    const updatedSnaps = snaps.map(snap => {
+      if (snap.ID === snapId) {
+        return { ...snap, liked: !snap.liked };
       }
-      return post;
+      return snap;
     });
-    setPosts(updatedPosts);
+    setSnaps(updatedSnaps);
   }
 
   useEffect(() => {
-    fetchPosts();
+    fetchSnaps();
   }, []);
 
   return (
     <ScrollView style={styles.container}>
-      {posts.map(post => (
-        <Card key={post.ID} style={styles.postCard}>
+      {snaps.map(snap => (
+        <Card key={snap.ID} style={styles.snapCard}>
           <Card.Title
-            title={post.user}
-            subtitle={formatDate(post.createdAt)}
+            title={snap.user}
+            subtitle={formatDate(snap.createdAt)}
             titleStyle={styles.titleStyle}
             subtitleStyle={styles.subtitleStyle}
             left={() => (
@@ -91,15 +81,15 @@ export default function HomeScreen() {
             )}
           />
           <Card.Content>
-            <Text style={styles.message}>{post.message}</Text>
+            <Text style={styles.message}>{snap.message}</Text>
           </Card.Content>
           <Card.Actions style={styles.actions}>
             <Ionicons
-              name={post.liked ? 'heart' : 'heart-outline'}
+              name={snap.liked ? 'heart' : 'heart-outline'}
               size={24}
               color="#65558F"
               style={styles.iconButton}
-              onPress={() => handleLikePost(post.ID)}
+              onPress={() => handleLikeSnap(snap.ID)}
             />
             <Text style={styles.interactionCount}>3</Text>
             <Ionicons
@@ -107,7 +97,7 @@ export default function HomeScreen() {
               size={24}
               color="#65558F"
               style={styles.iconButton}
-              onPress={() => console.log('Comment on post')}
+              onPress={() => console.log('SnapShare')}
             />
             <Text style={styles.interactionCount}>5</Text>
           </Card.Actions>
@@ -119,7 +109,7 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f0f0' },
-  postCard: {
+  snapCard: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#4c669f',
