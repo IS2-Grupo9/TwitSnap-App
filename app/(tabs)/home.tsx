@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Image } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { ScrollView, StyleSheet, Image, RefreshControl } from 'react-native';
+import { ActivityIndicator, Card, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Snap {
   ID: number;
   message: string;
   user: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
   liked: boolean;
 }
 
-// Placeholder snaps
-const placeholderSnaps = [
-  { ID: 4, user: 1, createdAt: '2024-09-29T15:45:33', updatedAt: '2024-09-29T15:45:33', message: 'Fourth post!' },
-  { ID: 3, user: 1, createdAt: '2024-09-29T15:40:21', updatedAt: '2024-09-29T15:40:21', message: 'Third post!' },
-  { ID: 2, user: 2, createdAt: '2024-09-28T14:22:10', updatedAt: '2024-09-28T14:22:10', message: 'Second post!' },
-  { ID: 1, user: 3, createdAt: '2024-09-27T13:12:05', updatedAt: '2024-09-27T13:12:05', message: 'First!' },
-];
+interface HomeScreenProps {
+  showSnackbar: (message: string, type: string) => void;
+}
 
-export default function HomeScreen() {
+export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
   const [snaps, setSnaps] = useState<Snap[]>([]);
+  const [loading, setLoading] = useState(false);
+  const apiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -36,17 +34,36 @@ export default function HomeScreen() {
   };
 
   const fetchUserById = (userId: number) => {
-    // Fetch user by ID from the placeholder users data
+    
   };
 
-  const fetchSnaps = () => {
-    const completeSnaps = placeholderSnaps.map(snap => {
-      return {
-        ...snap,
-        liked: false,
-      };
+  const fetchSnaps = async () => {
+    // TODO: Change to gateway API with authentication
+    setLoading(true);
+    const response = await fetch(`${apiUrl}/snaps`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.ok) {
+      showSnackbar('Failed to fetch snaps.', 'error');
+      setLoading(false);
+      return;
+    }
+    const snaps = await response.json();
+    const completedSnaps = snaps.data?.map((snap: any) => ({
+      ...snap,
+      liked: false,
+    }));
+    // Sort by most recent
+    completedSnaps.sort((a: Snap, b: Snap) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-    setSnaps(completeSnaps);
+    setSnaps(completedSnaps);    
+    setLoading(false);
   };
   
   const handleLikeSnap = (snapId: number) => {
@@ -65,12 +82,20 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={loading}
+          onRefresh={fetchSnaps}
+          colors={['#65558F']}
+        />
+      }>
       {snaps.map(snap => (
         <Card key={snap.ID} style={styles.snapCard}>
           <Card.Title
             title={snap.user}
-            subtitle={formatDate(snap.createdAt)}
+            subtitle={formatDate(snap.created_at)}
             titleStyle={styles.titleStyle}
             subtitleStyle={styles.subtitleStyle}
             left={() => (
