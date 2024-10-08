@@ -61,7 +61,11 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
       if (response.ok) {
         fetchProfile();
         showSnackbar('Profile updated successfully!', 'success');
-      } else {
+      } else if (response.status === 400) {
+        const message = await response.text();
+        showSnackbar(JSON.parse(message).error || 'Invalid input.', 'error');
+      }
+      else {
         showSnackbar('Failed to update profile. Please try again.', 'error');
       }
     } catch (error) {
