@@ -34,9 +34,13 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
   const [snaps, setSnaps] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [loadingCreateModal, setLoadingCreateModal] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [loadingEditModal, setLoadingEditModal] = useState(false);
   const [newSnapMessage, setNewSnapMessage] = useState('');
+  const [editedSnapMessage, setEditedSnapMessage] = useState('');
+  const [editedSnap, setEditedSnap] = useState<Snap | null>(null);
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
@@ -63,7 +67,6 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
         'Pragma': 'no-cache',
       },
     });
-    console.log(auth.token);
     if (!response.ok) {
       return 'Unknown';
     } else {
@@ -108,7 +111,7 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
     const completedSnaps = snaps.data?.map((snap: any) => ({
       ...snap,
       liked: false,
-      editable: snap.user === user?.id,
+      editable: snap.user === String(user?.id),
     }));
     for (const snap of completedSnaps) {
       snap.username = await fetchUserById(snap.user);
@@ -121,12 +124,18 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
   };
 
   const handleCreateSnap = () => {
-    setModalVisible(true);
+    setCreateModalVisible(true);
   };
+
+  const handleEditSnap = (snap: Snap) => {
+    setEditModalVisible(true);
+    setEditedSnap(snap);
+    setEditedSnapMessage(snap.message);
+  }
 
   const handleSubmitSnap = async () => {
     // TODO: Do through gateway API with authorization
-    setLoadingCreate(true);
+    setLoadingCreateModal(true);
     try {
       if (!newSnapMessage.trim()) {
         showSnackbar('Snap message cannot be empty!', 'error');
@@ -134,7 +143,6 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
       }
 
       const id = String(user?.id || '');
-      console.log(`Creating snap for user: ${id}`);
       const response = await fetch(`${postsApiUrl}/snaps`, {
         method: 'POST',
         headers: {
@@ -149,26 +157,61 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
       if (!response.ok) {
         const message = await response.text();
         showSnackbar(JSON.parse(message).detail || 'Failed to create snap.', 'error');
-        setLoadingCreate(false);
-        setModalVisible(false);
+        setLoadingCreateModal(false);
+        setCreateModalVisible(false);
         return;
       }
 
       const newSnap = await response.json();
-      setLoadingCreate(false);
-      setModalVisible(false);
+      setLoadingCreateModal(false);
+      setCreateModalVisible(false);
       setNewSnapMessage('');
       fetchSnaps();
     } catch (error) {
       showSnackbar('An error occurred. Please try again later.', 'error');
-      setModalVisible(false);
-      setLoadingCreate(false);
+      setCreateModalVisible(false);
+      setLoadingCreateModal(false);
     }
   };
 
-  const handleEditSnap = (snapId: number) => {
-    console.log(`Edit snap: ${snapId}`);
-  };
+  const handleSubmitEditSnap = async () => {
+    setLoadingEditModal(true);
+    try{
+      if (!editedSnapMessage.trim()) {
+        showSnackbar('Snap message cannot be empty!', 'error');
+        return;
+      }
+
+      const response = await fetch(`${postsApiUrl}/snaps/${editedSnap?.ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: editedSnapMessage
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        showSnackbar(JSON.parse(message).detail || 'Failed to edit snap.', 'error');
+        setLoadingEditModal(false);
+        setEditModalVisible(false);
+        return;
+      }
+
+      const newSnap = await response.json();
+      setLoadingEditModal(false);
+      setEditModalVisible(false);
+      setEditedSnapMessage('');
+      fetchSnaps();
+    }
+    catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+      setEditModalVisible(false);
+      setLoadingEditModal(false);
+    }
+  }
 
   const handleLikeSnap = (snapId: number) => {
     const updatedSnaps = snaps.map(snap => {
@@ -205,7 +248,7 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
               )}
               right={() =>
                 snap.editable && (
-                  <TouchableOpacity onPress={() => handleEditSnap(snap.ID)}>
+                  <TouchableOpacity onPress={() => handleEditSnap(snap)}>
                     <Ionicons name="pencil" size={18} color="black" />
                   </TouchableOpacity>
                 )
@@ -244,12 +287,12 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
       <TouchableOpacity style={styles.floatingButton} onPress={handleCreateSnap}>
         <Ionicons name="create-outline" size={36} color="white" />
       </TouchableOpacity>
-
+      {/* Create Snap Modal */}
       <Modal
         animationType="fade"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        visible={createModalVisible}
+        onRequestClose={() => setCreateModalVisible(false)}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -261,7 +304,7 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
               onChangeText={setNewSnapMessage}
               multiline
             />
-            {loadingCreate ? (
+            {loadingCreateModal ? (
               <ActivityIndicator size="large" color="#65558F" />
             ) : (
               <Button
@@ -274,7 +317,43 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
                 Create Snap
               </Button>
             )}
-            <Button mode="text" onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+            <Button mode="text" onPress={() => setCreateModalVisible(false)} style={styles.cancelButton}>
+              Cancel
+            </Button>
+          </View>
+        </View>
+      </Modal>
+      {/* Edit Snap Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Snap</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Edit your snap..."
+              value={editedSnapMessage}
+              onChangeText={setEditedSnapMessage}
+              multiline
+            />
+            {loadingEditModal ? (
+              <ActivityIndicator size="large" color="#65558F" />
+            ) : (
+              <Button
+                mode="contained"
+                onPress={handleSubmitEditSnap}
+                buttonColor="#65558F"
+                textColor="#FFFFFF"
+                style={styles.modalButton}
+              >
+                Save Changes
+              </Button>
+            )}
+            <Button mode="text" onPress={() => setEditModalVisible(false)} style={styles.cancelButton}>
               Cancel
             </Button>
           </View>
