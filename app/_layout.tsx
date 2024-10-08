@@ -53,7 +53,9 @@ const RootLayout: React.FC = () => {
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {auth.token ? (
             <>
-              <RootStack.Screen name="(tabs)" component={TabLayout} />
+              <RootStack.Screen name="(tabs)">
+                {() => <TabLayout showSnackbar={showSnackbar} />}
+              </RootStack.Screen>
               <RootStack.Screen name="screens/profile">
                 {() => <ProfileScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>

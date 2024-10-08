@@ -11,7 +11,11 @@ import ChatScreen from './chat';
 
 const Tab = createBottomTabNavigator();
 
-export default function TabLayout() {
+interface TabLayoutProps {
+  showSnackbar: (message: string, type: string) => void;
+}
+
+export default function TabLayout({ showSnackbar }: TabLayoutProps) {
   const colorScheme = useColorScheme();
 
   return (
@@ -46,8 +50,9 @@ export default function TabLayout() {
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={30} />
             ),
-          }}
-          component={HomeScreen} />
+          }}>
+          {() => <HomeScreen showSnackbar={showSnackbar} />}
+        </Tab.Screen>
         <Tab.Screen
         name="chat"
         options={{

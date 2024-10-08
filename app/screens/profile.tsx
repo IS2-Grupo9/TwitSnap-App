@@ -153,7 +153,7 @@ export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
           </View>
         )}
       </LinearGradient>
-      <Modal transparent={true} visible={isModalVisible} animationType="slide">
+      <Modal transparent={true} visible={isModalVisible} animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
