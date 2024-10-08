@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Image, RefreshControl } from 'react-native';
 import { ActivityIndicator, Card, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/components/contexts/AuthContext';
 
 interface Snap {
   ID: number;
@@ -9,7 +10,8 @@ interface Snap {
   user: string;
   created_at: string;
   updated_at: string;
-  liked: boolean;
+  username?: string;
+  liked?: boolean;
 }
 
 interface HomeScreenProps {
@@ -17,9 +19,11 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
+  const { auth } = useAuth();
   const [snaps, setSnaps] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(false);
-  const apiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
+  const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+  const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -33,14 +37,27 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const fetchUserById = (userId: number) => {
-    
+  const fetchUserById = async (userId: string) => {
+    const response = await fetch(`${apiUrl}/auth/user`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth.token}`,
+      },
+    });
+    if (!response.ok) {
+      return 'Unknown';
+    }
+    else {
+      const user = await response.json();
+      return user.username;
+    }
   };
 
   const fetchSnaps = async () => {
     // TODO: Change to gateway API with authentication
     setLoading(true);
-    const response = await fetch(`${apiUrl}/snaps`,
+    const response = await fetch(`${postsApiUrl}/snaps`,
       {
         method: 'GET',
         headers: {
@@ -58,11 +75,15 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
       ...snap,
       liked: false,
     }));
+    // Fetch usernames for each snap
+    for (const snap of completedSnaps) {
+      snap.username = await fetchUserById(snap.user);
+    }
     // Sort by most recent
     completedSnaps.sort((a: Snap, b: Snap) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-    setSnaps(completedSnaps);    
+    setSnaps(completedSnaps);
     setLoading(false);
   };
   
@@ -94,7 +115,7 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
       {snaps.map(snap => (
         <Card key={snap.ID} style={styles.snapCard}>
           <Card.Title
-            title={snap.user}
+            title={snap.username || 'Unknown'}
             subtitle={formatDate(snap.created_at)}
             titleStyle={styles.titleStyle}
             subtitleStyle={styles.subtitleStyle}
