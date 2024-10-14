@@ -5,11 +5,11 @@ import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
-interface ProfileScreenProps {
+interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
 }
 
-export default function ProfileScreen({ showSnackbar }: ProfileScreenProps) {
+export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) {
   const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [isModalVisible, setModalVisible] = useState(false);

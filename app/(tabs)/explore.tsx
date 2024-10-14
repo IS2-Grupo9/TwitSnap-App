@@ -1,7 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function ExploreScreen() {
+interface ExploreScreenProps {
+  showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (user: string) => void;
+}
+
+export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser }: ExploreScreenProps) {
 
   return (
     <View style={styles.container}>

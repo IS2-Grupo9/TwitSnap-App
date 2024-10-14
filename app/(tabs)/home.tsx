@@ -3,6 +3,8 @@ import { ScrollView, StyleSheet, Image, RefreshControl, View, TouchableOpacity, 
 import { ActivityIndicator, Card, Text, Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 interface Snap {
   ID: number;
@@ -27,13 +29,16 @@ interface User {
 
 interface HomeScreenProps {
   showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (user: string) => void;
 }
 
-export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
+export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: HomeScreenProps) {
   const { auth } = useAuth();
   const [snaps, setSnaps] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const navigation = useNavigation();
   
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
@@ -279,6 +284,21 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
     setSnaps(updatedSnaps);
   };
 
+  const goToProfile = (userId: string) => {
+    const state = navigation.getState();
+    if (userId === String(user?.id)) {
+      if (state && !state.routes.find(route => route.name === 'screens/my-profile')){
+        router.push('./screens/my-profile');
+      }
+    }
+    else {
+      setTargetUser(userId);
+      if (state && !state.routes.find(route => route.name === 'screens/user-profile')){
+        router.push('./screens/user-profile');
+      }
+    }
+  }
+
   useEffect(() => {
     fetchSnaps();
     fetchUser();
@@ -295,12 +315,18 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
         {snaps.map(snap => (
           <Card key={snap.ID} style={styles.snapCard}>
             <Card.Title
-              title={snap.username || 'Unknown'}
+              title={
+                <TouchableOpacity onPress={() => goToProfile(snap.user)}>
+                  <Text style={styles.titleStyle}>{snap.username || 'Unkwown'}</Text>
+                </TouchableOpacity>
+              }
               subtitle={formatDate(snap.created_at, snap.updated_at)}
               titleStyle={styles.titleStyle}
               subtitleStyle={styles.subtitleStyle}
               left={() => (
-                <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
+                <TouchableOpacity onPress={() => goToProfile(snap.user)}>
+                  <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
+                </TouchableOpacity>
               )}
               right={() => (
                   snap.editable && (

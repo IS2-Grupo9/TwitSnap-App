@@ -20,8 +20,8 @@ export function TopBar(
 
   const handleProfile = () => {
     const state = navigation.getState();
-    if (state && !state.routes.find(route => route.name === 'screens/profile')){
-      router.push('/screens/profile');
+    if (state && !state.routes.find(route => route.name === 'screens/my-profile')){
+      router.push('./screens/my-profile');
     }
     closeMenu();
   };

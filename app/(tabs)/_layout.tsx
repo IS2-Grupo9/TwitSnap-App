@@ -13,9 +13,11 @@ const Tab = createBottomTabNavigator();
 
 interface TabLayoutProps {
   showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (user: string) => void;
 }
 
-export default function TabLayout({ showSnackbar }: TabLayoutProps) {
+export default function TabLayout({ showSnackbar, targetUser, setTargetUser }: TabLayoutProps) {
   const colorScheme = useColorScheme();
 
   return (
@@ -41,8 +43,9 @@ export default function TabLayout({ showSnackbar }: TabLayoutProps) {
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name={focused ? 'search' : 'search-outline'} color={color} size={30} />
             ),
-          }}
-          component={ExploreScreen} />
+          }}>
+          {() => <ExploreScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+        </Tab.Screen>
         <Tab.Screen
           name="home"
           options={{
@@ -51,7 +54,7 @@ export default function TabLayout({ showSnackbar }: TabLayoutProps) {
               <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={30} />
             ),
           }}>
-          {() => <HomeScreen showSnackbar={showSnackbar} />}
+          {() => <HomeScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
         </Tab.Screen>
         <Tab.Screen
         name="chat"

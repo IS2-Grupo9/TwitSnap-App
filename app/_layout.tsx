@@ -14,7 +14,8 @@ import Welcome from './screens/welcome';
 import Login from './screens/login';
 import EmailRegister from './screens/email-register';
 import EmailLogin from './screens/email-login';
-import ProfileScreen from './screens/profile';
+import MyProfileScreen from './screens/my-profile';
+import UserProfileScreen from './screens/user-profile';
 
 const RootStack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ const RootLayout: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarType, setSnackbarType] = useState('success');
   const { auth } = useAuth();
+  const [targetUser, setTargetUser] = useState('');
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -54,10 +56,13 @@ const RootLayout: React.FC = () => {
           {auth.token ? (
             <>
               <RootStack.Screen name="(tabs)">
-                {() => <TabLayout showSnackbar={showSnackbar} />}
+                {() => <TabLayout showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
               </RootStack.Screen>
-              <RootStack.Screen name="screens/profile">
-                {() => <ProfileScreen showSnackbar={showSnackbar} />}
+              <RootStack.Screen name="screens/my-profile">
+                {() => <MyProfileScreen showSnackbar={showSnackbar} />}
+              </RootStack.Screen>
+              <RootStack.Screen name="screens/user-profile">
+                {() => <UserProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} />}
               </RootStack.Screen>
             </>
           ) : (
