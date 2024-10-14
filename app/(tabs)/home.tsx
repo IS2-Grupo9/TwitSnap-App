@@ -57,21 +57,34 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const fetchUserById = async (userId: string) => {
-    const response = await fetch(`${apiUrl}/users/user?id=${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth.token}`,
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-    });
-    if (!response.ok) {
-      return 'Unknown';
-    } else {
-      const user = await response.json();
-      return user.username;
+  const fetchUsersById = async (userIds: string[]) => {
+    try {
+      // Remove user IDs that are not numbers and duplicates
+      userIds = userIds.filter((id) => !isNaN(Number(id)));
+      userIds = Array.from(new Set(userIds));
+      const response = await fetch(`${apiUrl}/users/users?ids=${userIds}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch usernames.', 'error');
+        return {};
+      } else {
+        const users = await response.json();
+        const userDict: { [key: string]: string } = {};
+        users.forEach((user: any) => {
+          userDict[user.id] = user.username;
+        });
+        return userDict;
+      }
+    } catch (error) {
+      showSnackbar('Failed to fetch usernames.', 'error');
+      return {};
     }
   };
 
@@ -108,14 +121,13 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
       return;
     }
     const snaps = await response.json();
+    const userNames = await fetchUsersById(snaps.data?.map((snap: any) => snap.user));
     const completedSnaps = snaps.data?.map((snap: any) => ({
       ...snap,
       liked: false,
       editable: snap.user === String(user?.id),
+      username: userNames[snap.user] || 'Unknown',
     }));
-    for (const snap of completedSnaps) {
-      snap.username = await fetchUserById(snap.user);
-    }
     completedSnaps.sort((a: Snap, b: Snap) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
