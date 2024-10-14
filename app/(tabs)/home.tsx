@@ -34,15 +34,22 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
   const [snaps, setSnaps] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [loadingCreateModal, setLoadingCreateModal] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [loadingEditModal, setLoadingEditModal] = useState(false);
-  const [newSnapMessage, setNewSnapMessage] = useState('');
-  const [editedSnapMessage, setEditedSnapMessage] = useState('');
-  const [editedSnap, setEditedSnap] = useState<Snap | null>(null);
+  
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
+
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [newSnapMessage, setNewSnapMessage] = useState('');
+  const [loadingCreateModal, setLoadingCreateModal] = useState(false);
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editedSnap, setEditedSnap] = useState<Snap | null>(null);
+  const [editedSnapMessage, setEditedSnapMessage] = useState('');
+  const [loadingEditModal, setLoadingEditModal] = useState(false);
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [snapToDelete, setSnapToDelete] = useState<number | null>(null);
+  const [loadingDeleteModal, setLoadingDeleteModal] = useState(false);
 
   const formatDate = (created_at: string | undefined, updated_at: string | undefined) => {
     const dateString = updated_at || created_at;
@@ -225,6 +232,43 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
     }
   }
 
+  const handleDeleteSnap = (snapId: number) => {
+    setSnapToDelete(snapId);
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDeleteSnap = async () => {
+    if (snapToDelete === null) return;
+    setLoadingDeleteModal(true);
+    try {
+      const response = await fetch(`${postsApiUrl}/snaps/${snapToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        const message = await response.text();
+        showSnackbar(JSON.parse(message).detail || 'Failed to delete snap.', 'error');
+        setLoadingDeleteModal(false);
+        setDeleteModalVisible(false);
+        setSnapToDelete(null);
+        return;
+      }
+  
+      setLoadingDeleteModal(false);
+      setDeleteModalVisible(false);
+      setSnapToDelete(null);
+      fetchSnaps();
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+      setLoadingDeleteModal(false);
+      setDeleteModalVisible(false);
+      setSnapToDelete(null);
+    }
+  };
+
   const handleLikeSnap = (snapId: number) => {
     const updatedSnaps = snaps.map(snap => {
       if (snap.ID === snapId) {
@@ -258,18 +302,23 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
               left={() => (
                 <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
               )}
-              right={() =>
-                snap.editable && (
-                  <TouchableOpacity onPress={() => handleEditSnap(snap)}>
-                    <Ionicons name="pencil" size={18} color="black" />
-                  </TouchableOpacity>
-                )
-              }
+              right={() => (
+                  snap.editable && (
+                    <View style={styles.topActions}>
+                      <TouchableOpacity onPress={() => handleEditSnap(snap)}>
+                        <Ionicons name="pencil" size={18} color="#65558F" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteSnap(snap.ID)}>
+                        <Ionicons name="trash" size={18} color="#65558F" />
+                      </TouchableOpacity>
+                    </View>
+                  )
+              )}
             />
             <Card.Content>
               <Text style={styles.message}>{snap.message}</Text>
             </Card.Content>
-            <Card.Actions style={styles.actions}>
+            <Card.Actions style={styles.bottomActions}>
               <Ionicons
                 name={snap.liked ? 'heart' : 'heart-outline'}
                 size={24}
@@ -371,6 +420,36 @@ export default function HomeScreen({ showSnackbar }: HomeScreenProps) {
           </View>
         </View>
       </Modal>
+      {/* Delete Snap Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteModalVisible}
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm Deletion</Text>
+            <Text style={{ marginBottom: 20, color: 'black' }}>Are you sure you want to delete this snap?</Text>
+            <Button
+              mode="contained"
+              onPress={handleConfirmDeleteSnap}
+              buttonColor="#FF6347"
+              textColor="#FFFFFF"
+              style={styles.modalButton}
+            >
+              Delete
+            </Button>
+            <Button
+              mode="text"
+              onPress={() => setDeleteModalVisible(false)}
+              style={styles.cancelButton}
+            >
+              Cancel
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -383,7 +462,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4c669f',
     borderRadius: 0,
-    paddingHorizontal: 20,
+    paddingRight: 20,
+    paddingLeft: 10,
     paddingVertical: 10,
   },
   titleStyle: {
@@ -396,9 +476,14 @@ const styles = StyleSheet.create({
     color: 'black',
     marginBottom: 5,
   },
-  actions: {
+  bottomActions: {
     justifyContent: 'flex-start',
-    padding: 15,
+  },
+  topActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: 60,
   },
   avatar: {
     width: 40,
