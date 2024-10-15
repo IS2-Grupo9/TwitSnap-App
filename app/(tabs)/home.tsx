@@ -288,13 +288,13 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
     const state = navigation.getState();
     if (userId === String(user?.id)) {
       if (state && !state.routes.find(route => route.name === 'screens/my-profile')){
-        router.push('./screens/my-profile');
+        router.push('/screens/my-profile');
       }
     }
     else {
       setTargetUser(userId);
       if (state && !state.routes.find(route => route.name === 'screens/user-profile')){
-        router.push('./screens/user-profile');
+        router.push('/screens/user-profile');
       }
     }
   }

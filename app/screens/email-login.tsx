@@ -35,7 +35,7 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
         showSnackbar('Invalid email address.', 'error');
         return;
       }
-
+      
       setLoading(true); // Start loading
       const response = await fetch(`${apiUrl}/users/login`, {
         method: 'POST',
@@ -49,6 +49,7 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
       });
 
       if (!response.ok) {
+        // TODO: handle responses that aren't JSON (Heroku error page)
         const errorData = await response.json();
         showSnackbar(errorData.message || 'Invalid email or password. Please try again.', 'error');
         setLoading(false);
