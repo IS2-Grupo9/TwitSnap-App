@@ -37,7 +37,6 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
   const { auth } = useAuth();
   const [snaps, setSnaps] = useState<Snap[]>([]);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const navigation = useNavigation();
   
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
@@ -100,25 +99,6 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
     }
   };
 
-  const fetchUser = async () => {
-    // TODO: Have this in an user context
-    const response = await fetch(`${apiUrl}/users/profile`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth.token}`,
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-      },
-    });
-    if (!response.ok) {
-      showSnackbar('Failed to fetch user.', 'error');
-      return;
-    }
-    const user = await response.json();
-    setUser(user);
-  };
-
   const fetchSnaps = async () => {
     setLoading(true);
     const response = await fetch(`${postsApiUrl}/snaps`, {
@@ -137,7 +117,7 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
     const completedSnaps = snaps.data?.map((snap: any) => ({
       ...snap,
       liked: false,
-      editable: snap.user === String(user?.id),
+      editable: snap.user === String(auth.user?.id),
       username: userNames[snap.user] || 'Unknown',
     }));
     completedSnaps.sort((a: Snap, b: Snap) => {
@@ -166,7 +146,7 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
         return;
       }
 
-      const id = String(user?.id || '');
+      const id = String(auth.user?.id || '');
       const response = await fetch(`${postsApiUrl}/snaps`, {
         method: 'POST',
         headers: {
@@ -286,7 +266,7 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
 
   const goToProfile = (userId: string) => {
     const state = navigation.getState();
-    if (userId === String(user?.id)) {
+    if (userId === String(auth.user?.id)){
       if (state && !state.routes.find(route => route.name === 'screens/my-profile')){
         router.push('/screens/my-profile');
       }
@@ -301,7 +281,6 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
 
   useEffect(() => {
     fetchSnaps();
-    fetchUser();
   }, []);
 
   return (
