@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     alignSelf: 'center',
     position: 'absolute',
-    bottom: 20,
+    bottom: 75,
     width: '90%',
   },
   snackbarText: {

@@ -21,6 +21,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
   const [loading, setLoading] = useState(false);
   const [snaps, setSnaps] = useState<ExtendedSnap[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchMade, setSearchMade] = useState(feed || false);
   
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
@@ -309,6 +310,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
           return;
         }
         fetchedSnaps = await handleSearch();
+        setSearchMade(true);
       }
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
@@ -423,7 +425,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
             ))}
             <View style={{ height: 100 }}>
               <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-                {snaps.length === 0 ? 'No snaps found' : ''}
+                {snaps.length === 0 && searchMade ? 'No snaps found' : ''}
               </Text>
             </View>
           </ScrollView>
