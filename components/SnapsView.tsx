@@ -356,6 +356,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
           },
         }}
         onSubmitEditing={loadSnaps}
+        left={searchType === 'hashtag' ? <PaperTextInput.Affix text="#" /> : undefined}
       />
       )}
       <View style={{ ...styles.scrollContainer, marginTop: feed ? 0 : 20 }}>
