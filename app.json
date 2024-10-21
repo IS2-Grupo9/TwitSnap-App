@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.is2grupo9.TwitSnapApp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -31,6 +32,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5c5b5184-8ddb-487c-b16f-d87866c7d826"
+      }
     }
   }
 }
