@@ -4,11 +4,18 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { TextInput, Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { Snap, User } from '@/components/types/models';
+import { ExtendedSnap, Snap, User } from '@/components/types/models';
+import SnapsView from '@/components/SnapsView';
 
 const Tab = createMaterialTopTabNavigator();
 
-function SearchUsers() {
+interface SearchUsersProps {
+  showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (user: string) => void;
+}
+
+function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersProps) {
   const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,12 +41,14 @@ function SearchUsers() {
         setSearchMade(true);
       } else {
         const error = await response.json();
+        showSnackbar('Error searching users.', 'error');
         console.log('Error searching users:', error);
         setUsers([]);
         setSearchMade(true);
       }
     }
     catch (error: any) {
+      showSnackbar('Error searching users.', 'error');
       console.error('Error searching users:', error.message);
     }
     finally {
@@ -90,17 +99,20 @@ function SearchUsers() {
   );
 }
 
-function SearchSnaps() {
+interface SearchSnapsProps {
+  showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (targetUser: string) => void;
+}
+
+function SearchSnaps({ showSnackbar, targetUser, setTargetUser }: SearchSnapsProps) {
   const { auth } = useAuth();
+  const [trigger, setTrigger] = useState(false);
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
   const [searchQuery, setSearchQuery] = useState('');
-  const [snaps, setSnaps] = useState<Snap[]>([]);
-  const [searchMade, setSearchMade] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     try {
-      setLoading(true);
       const response = await fetch(`${postsApiUrl}/search/text?text=${searchQuery}`, {
         method: 'GET',
         headers: {
@@ -109,29 +121,33 @@ function SearchSnaps() {
       });
       if (response.ok) {
         const data = await response.json();
-        setSnaps(data?.data);
-        setSearchMade(true);
+        return data?.data
       } else {
         const error = await response.json();
+        showSnackbar('Error searching snaps.', 'error');
         console.log('Error searching snaps:', error);
-        setSnaps([]);
-        setSearchMade(true);
+        return [];
       }
     }
     catch (error: any) {
+      showSnackbar('Error searching snaps.', 'error');
       console.error('Error searching snaps:', error.message);
-    }
-    finally {
-      setLoading(false);
+      return [];
     }
   }
+
+  const triggerSearch = async () => {
+    setTrigger(true);
+  }
+
+  // TODO: Put search text input inside snap view component
 
   return (
     <View style={styles.tabContainer}>
       <TextInput
         style={styles.input}
         value={searchQuery}
-        right={<TextInput.Icon icon="magnify" onPress={handleSearch} />}
+        right={<TextInput.Icon icon="magnify" onPress={triggerSearch} />}
         onChangeText={setSearchQuery}
         label="Search Snaps"
         mode="outlined"
@@ -147,39 +163,33 @@ function SearchSnaps() {
           },
         }}
       />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleSearch} colors={['#65558F']} />
-        }
-      >
-        {snaps.map((snap) => (
-          <View key={snap.ID} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#65558F' }}>{snap.message}</Text>
-            <Text style={{ fontSize: 14, color: '#65558F' }}>{snap.user}</Text>
-          </View>
-        ))}
-        <View style={{ height: 100 }}>
-          <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-            {snaps.length === 0 && searchMade ? 'No snaps found' : ''}
-          </Text>
-        </View>
-      </ScrollView>
+      <SnapsView
+        showSnackbar={showSnackbar}
+        targetUser={targetUser}
+        setTargetUser={setTargetUser}
+        fetchSnaps={handleSearch}
+        trigger={trigger}
+        setTrigger={setTrigger}
+        feed={false}
+      />
     </View>
   );
 }
 
-function SearchHashtag() {
+interface SearchHashtagProps {
+  showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (targetUser: string) => void;
+}
+
+function SearchHashtag({ showSnackbar, targetUser, setTargetUser }: SearchHashtagProps) {
   const { auth } = useAuth();
+  const [trigger, setTrigger] = useState(false);
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
   const [searchQuery, setSearchQuery] = useState('');
-  const [snaps, setSnaps] = useState<Snap[]>([]);
-  const [searchMade, setSearchMade] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     try {
-      setLoading(true);
       const response = await fetch(`${postsApiUrl}/search/hashtag?hashtag=${searchQuery}`, {
         method: 'GET',
         headers: {
@@ -188,21 +198,23 @@ function SearchHashtag() {
       });
       if (response.ok) {
         const data = await response.json();
-        setSnaps(data?.data);
-        setSearchMade(true);
+        return data?.data
       } else {
         const error = await response.json();
+        showSnackbar('Error searching snaps.', 'error');
         console.log('Error searching snaps:', error);
-        setSnaps([]);
-        setSearchMade(true);
+        return [];
       }
     }
     catch (error: any) {
+      showSnackbar('Error searching snaps.', 'error');
       console.error('Error searching snaps:', error.message);
+      return [];
     }
-    finally {
-      setLoading(false);
-    }
+  }
+
+  const triggerSearch = async () => {
+    setTrigger(true);
   }
 
   return (
@@ -210,7 +222,7 @@ function SearchHashtag() {
       <TextInput
         style={styles.input}
         value={searchQuery}
-        right={<TextInput.Icon icon="magnify" onPress={handleSearch} />}
+        right={<TextInput.Icon icon="magnify" onPress={triggerSearch} />}
         onChangeText={setSearchQuery}
         label="Search Hashtag"
         mode="outlined"
@@ -226,24 +238,15 @@ function SearchHashtag() {
           },
         }}
       />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleSearch} colors={['#65558F']} />
-        }
-      >
-        {snaps.map((snap) => (
-          <View key={snap.ID} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#65558F' }}>{snap.message}</Text>
-            <Text style={{ fontSize: 14, color: '#65558F' }}>{snap.user}</Text>
-          </View>
-        ))}
-        <View style={{ height: 100 }}>
-          <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-            {snaps.length === 0 && searchMade ? 'No snaps found' : ''}
-          </Text>
-        </View>
-      </ScrollView>
+      <SnapsView
+        showSnackbar={showSnackbar}
+        targetUser={targetUser}
+        setTargetUser={setTargetUser}
+        fetchSnaps={handleSearch}
+        trigger={trigger}
+        setTrigger={setTrigger}
+        feed={false}
+      />
     </View>
   );
 }
@@ -267,20 +270,35 @@ export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser 
       }}
     >
       <Tab.Screen 
-        name="Users" 
-        component={SearchUsers} 
+        name="Users"
         options={{ tabBarIcon: () => <Ionicons name="person-outline" size={20} /> }} 
-      />
+      >
+        {() => <SearchUsers
+          showSnackbar={showSnackbar}
+          targetUser={targetUser}
+          setTargetUser={setTargetUser}
+        />}
+      </Tab.Screen>
       <Tab.Screen 
         name="Snaps" 
-        component={SearchSnaps} 
         options={{ tabBarIcon: () => <Ionicons name="document-text-outline" size={20} /> }} 
-      />
+      >
+        {() => <SearchSnaps
+          showSnackbar={showSnackbar}
+          targetUser={targetUser}
+          setTargetUser={setTargetUser}
+        />}
+      </Tab.Screen>
       <Tab.Screen 
         name="Hashtags" 
-        component={SearchHashtag} 
         options={{ tabBarIcon: () => <Text style={styles.icon}>#</Text> }}
-      />
+      >
+        {() => <SearchHashtag
+          showSnackbar={showSnackbar}
+          targetUser={targetUser}
+          setTargetUser={setTargetUser}
+        />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }

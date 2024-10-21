@@ -11,6 +11,7 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: HomeScreenProps) {
   const { auth } = useAuth();
+  const [trigger, setTrigger] = useState(false);
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
   const fetchSnaps = async () => {
@@ -48,6 +49,9 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
       targetUser={targetUser}
       setTargetUser={setTargetUser}
       fetchSnaps={fetchSnaps}
+      trigger={trigger}
+      setTrigger={setTrigger}
+      feed={true}
     />    
   );
 }

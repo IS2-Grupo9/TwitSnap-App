@@ -12,13 +12,16 @@ interface SnapsViewProps {
   targetUser: string;
   setTargetUser: (user: string) => void;
   fetchSnaps: () => Promise<ExtendedSnap[]>;
+  trigger: boolean;
+  setTrigger: (trigger: boolean) => void;
+  feed?: boolean;
 }
 
-export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fetchSnaps }: SnapsViewProps) {
+export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fetchSnaps, trigger, setTrigger, feed }: SnapsViewProps) {
   const { auth } = useAuth();
   const navigation = useNavigation();
-  const [snaps, setSnaps] = useState<ExtendedSnap[]>([]);
   const [loading, setLoading] = useState(false);
+  const [snaps, setSnaps] = useState<ExtendedSnap[]>([]);
   
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
@@ -253,79 +256,86 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fet
   }
 
   useEffect(() => {
-    loadSnaps();
-  }, []);
+    if (feed || trigger) {
+      loadSnaps();
+    }
+  }, [trigger]);
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={loadSnaps} colors={['#65558F']} />
-        }
-      >
-        {snaps.map(snap => (
-          <Card key={snap.ID} style={styles.snapCard}>
-            <Card.Title
-              title={
-                <TouchableOpacity onPress={() => goToProfile(snap.user)}>
-                  <Text style={styles.titleStyle}>{snap.username || 'Unkwown'}</Text>
-                </TouchableOpacity>
-              }
-              subtitle={formatDate(snap.created_at, snap.updated_at)}
-              titleStyle={styles.titleStyle}
-              subtitleStyle={styles.subtitleStyle}
-              left={() => (
-                <TouchableOpacity onPress={() => goToProfile(snap.user)}>
-                  <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
-                </TouchableOpacity>
-              )}
-              right={() => (
-                  snap.editable && (
-                    <View style={styles.topActions}>
-                      <TouchableOpacity onPress={() => handleEditSnap(snap)}>
-                        <Ionicons name="pencil" size={18} color="#65558F" />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeleteSnap(snap.ID)}>
-                        <Ionicons name="trash" size={18} color="#65558F" />
-                      </TouchableOpacity>
-                    </View>
-                  )
-              )}
-            />
-            <Card.Content>
-              <Text style={styles.message}>{snap.message}</Text>
-            </Card.Content>
-            <Card.Actions style={styles.bottomActions}>
-              <Ionicons
-                name={snap.liked ? 'heart' : 'heart-outline'}
-                size={24}
-                color="#65558F"
-                style={styles.iconButton}
-                onPress={() => handleLikeSnap(snap.ID)}
+      {!feed && loading ? ( 
+        <ActivityIndicator size="large" color="#65558F" />
+      ) :
+        <ScrollView
+          style={styles.scrollView}
+          refreshControl={feed ? (
+            <RefreshControl refreshing={loading} onRefresh={loadSnaps} colors={['#65558F']} />
+          ) : undefined}
+        >
+          {snaps.map(snap => (
+            <Card key={snap.ID} style={styles.snapCard}>
+              <Card.Title
+                title={
+                  <TouchableOpacity onPress={() => goToProfile(snap.user)}>
+                    <Text style={styles.titleStyle}>{snap.username || 'Unkwown'}</Text>
+                  </TouchableOpacity>
+                }
+                subtitle={formatDate(snap.created_at, snap.updated_at)}
+                titleStyle={styles.titleStyle}
+                subtitleStyle={styles.subtitleStyle}
+                left={() => (
+                  <TouchableOpacity onPress={() => goToProfile(snap.user)}>
+                    <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
+                  </TouchableOpacity>
+                )}
+                right={() => (
+                    snap.editable && (
+                      <View style={styles.topActions}>
+                        <TouchableOpacity onPress={() => handleEditSnap(snap)}>
+                          <Ionicons name="pencil" size={18} color="#65558F" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteSnap(snap.ID)}>
+                          <Ionicons name="trash" size={18} color="#65558F" />
+                        </TouchableOpacity>
+                      </View>
+                    )
+                )}
               />
-              <Text style={styles.interactionCount}>3</Text>
-              <Ionicons
-                name="arrow-redo-outline"
-                size={24}
-                color="#65558F"
-                style={styles.iconButton}
-                onPress={() => console.log('SnapShare')}
-              />
-              <Text style={styles.interactionCount}>5</Text>
-            </Card.Actions>
-          </Card>
-        ))}
-        <View style={{ height: 100 }}>
-          <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-            {snaps.length === 0 ? 'No snaps available' : ''}
-          </Text>
-        </View>
-      </ScrollView>
-
-      <TouchableOpacity style={styles.floatingButton} onPress={handleCreateSnap}>
-        <Ionicons name="create-outline" size={36} color="white" />
-      </TouchableOpacity>
+              <Card.Content>
+                <Text style={styles.message}>{snap.message}</Text>
+              </Card.Content>
+              <Card.Actions style={styles.bottomActions}>
+                <Ionicons
+                  name={snap.liked ? 'heart' : 'heart-outline'}
+                  size={24}
+                  color="#65558F"
+                  style={styles.iconButton}
+                  onPress={() => handleLikeSnap(snap.ID)}
+                />
+                <Text style={styles.interactionCount}>3</Text>
+                <Ionicons
+                  name="arrow-redo-outline"
+                  size={24}
+                  color="#65558F"
+                  style={styles.iconButton}
+                  onPress={() => console.log('SnapShare')}
+                />
+                <Text style={styles.interactionCount}>5</Text>
+              </Card.Actions>
+            </Card>
+          ))}
+          <View style={{ height: 100 }}>
+            <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
+              {snaps.length === 0 ? 'No snaps found' : ''}
+            </Text>
+          </View>
+        </ScrollView>
+      }
+      { feed && (
+        <TouchableOpacity style={styles.floatingButton} onPress={handleCreateSnap}>
+          <Ionicons name="create-outline" size={36} color="white" />
+        </TouchableOpacity>
+      )}
       {/* Create Snap Modal */}
       <Modal
         animationType="fade"
