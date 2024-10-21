@@ -33,14 +33,14 @@ function SearchUsers() {
         setUsers(data);
         setSearchMade(true);
       } else {
-        const status = await response.status;
-        console.log('Error searching users:', status);
+        const error = await response.json();
+        console.log('Error searching users:', error);
         setUsers([]);
         setSearchMade(true);
       }
     }
-    catch (error) {
-      console.error('Error searching users:', error);
+    catch (error: any) {
+      console.error('Error searching users:', error.message);
     }
     finally {
       setLoading(false);
@@ -112,14 +112,14 @@ function SearchSnaps() {
         setSnaps(data?.data);
         setSearchMade(true);
       } else {
-        const status = await response.status;
-        console.log('Error searching snaps:', status);
+        const error = await response.json();
+        console.log('Error searching snaps:', error);
         setSnaps([]);
         setSearchMade(true);
       }
     }
-    catch (error) {
-      console.error('Error searching snaps:', error);
+    catch (error: any) {
+      console.error('Error searching snaps:', error.message);
     }
     finally {
       setLoading(false);
@@ -191,14 +191,14 @@ function SearchHashtag() {
         setSnaps(data?.data);
         setSearchMade(true);
       } else {
-        const status = await response.status;
-        console.log('Error searching snaps:', status);
+        const error = await response.json();
+        console.log('Error searching snaps:', error);
         setSnaps([]);
         setSearchMade(true);
       }
     }
-    catch (error) {
-      console.error('Error searching snaps:', error);
+    catch (error: any) {
+      console.error('Error searching snaps:', error.message);
     }
     finally {
       setLoading(false);

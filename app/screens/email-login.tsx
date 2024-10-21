@@ -48,20 +48,18 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
         }),
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        // TODO: handle responses that aren't JSON (Heroku error page)
-        const errorData = await response.json();
-        showSnackbar(errorData.message || 'Invalid email or password. Please try again.', 'error');
+        showSnackbar(data.message || 'Invalid email or password. Please try again.', 'error');
         setLoading(false);
         return;
       }
 
-      const data = await response.json();
       login({ token: data.token, user: data.user });
       setLoading(false);
     } catch (error: any) {
-      showSnackbar(`An unexpected error occurred: ${error.message}`, 'error');
-      console.error('Login Error:', error);
+      showSnackbar(`An unexpected error occurred: ${error.message}. Service may be down?`, 'error');
+      console.error('Login Error:', error.message);
       setLoading(false);
     }
   };
