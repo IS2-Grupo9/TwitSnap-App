@@ -6,6 +6,9 @@ import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { ExtendedSnap } from '@/components/types/models';
+import CreateSnapModal from './modals/CreateSnapModal';
+import EditSnapModal from './modals/EditSnapModal';
+import DeleteSnapModal from './modals/DeleteSnapModal';
 
 interface SnapsViewProps {
   showSnackbar: (message: string, type: string) => void;
@@ -29,17 +32,13 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [newSnapMessage, setNewSnapMessage] = useState('');
-  const [loadingCreateModal, setLoadingCreateModal] = useState(false);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedSnap, setEditedSnap] = useState<ExtendedSnap | null>(null);
   const [editedSnapMessage, setEditedSnapMessage] = useState('');
-  const [loadingEditModal, setLoadingEditModal] = useState(false);
 
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [snapToDelete, setSnapToDelete] = useState<number | null>(null);
-  const [loadingDeleteModal, setLoadingDeleteModal] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
 
   const formatDate = (created_at: string | undefined, updated_at: string | undefined) => {
@@ -97,121 +96,9 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
     setEditedSnapMessage(snap.message);
   }
 
-  const handleSubmitSnap = async () => {
-    setLoadingCreateModal(true);
-    try {
-      if (!newSnapMessage.trim()) {
-        showSnackbar('Snap message cannot be empty!', 'error');
-        return;
-      }
-
-      const id = String(auth.user?.id || '');
-      const response = await fetch(`${postsApiUrl}/snaps`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          user: id,
-          message: newSnapMessage
-        }),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        showSnackbar(JSON.parse(message).detail || 'Failed to create snap.', 'error');
-        setLoadingCreateModal(false);
-        setCreateModalVisible(false);
-        return;
-      }
-
-      const newSnap = await response.json();
-      setLoadingCreateModal(false);
-      setCreateModalVisible(false);
-      setNewSnapMessage('');
-      loadSnaps();
-    } catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
-      setCreateModalVisible(false);
-      setLoadingCreateModal(false);
-    }
-  };
-
-  const handleSubmitEditSnap = async () => {
-    setLoadingEditModal(true);
-    try {
-      if (!editedSnapMessage.trim()) {
-        showSnackbar('Snap message cannot be empty!', 'error');
-        return;
-      }
-
-      const response = await fetch(`${postsApiUrl}/snaps/${editedSnap?.ID}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          message: editedSnapMessage
-        }),
-      });
-
-      if (!response.ok) {
-        const message = await response.text();
-        showSnackbar(JSON.parse(message).detail || 'Failed to edit snap.', 'error');
-        setLoadingEditModal(false);
-        setEditModalVisible(false);
-        return;
-      }
-
-      const newSnap = await response.json();
-      setLoadingEditModal(false);
-      setEditModalVisible(false);
-      setEditedSnapMessage('');
-      
-      loadSnaps();
-    }
-    catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
-      setEditModalVisible(false);
-      setLoadingEditModal(false);
-    }
-  }
-
   const handleDeleteSnap = (snapId: number) => {
     setSnapToDelete(snapId);
     setDeleteModalVisible(true);
-  };
-
-  const handleConfirmDeleteSnap = async () => {
-    if (snapToDelete === null) return;
-    setLoadingDeleteModal(true);
-    try {
-      const response = await fetch(`${postsApiUrl}/snaps/${snapToDelete}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-  
-      if (!response.ok) {
-        const message = await response.text();
-        showSnackbar(JSON.parse(message).detail || 'Failed to delete snap.', 'error');
-        setLoadingDeleteModal(false);
-        setDeleteModalVisible(false);
-        setSnapToDelete(null);
-        return;
-      }
-  
-      setLoadingDeleteModal(false);
-      setDeleteModalVisible(false);
-      setSnapToDelete(null);
-      loadSnaps();
-    } catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
-      setLoadingDeleteModal(false);
-      setDeleteModalVisible(false);
-      setSnapToDelete(null);
-    }
   };
 
   const handleLikeSnap = (snapId: number) => {
@@ -436,112 +323,29 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
           <Ionicons name="create-outline" size={36} color="white" />
         </TouchableOpacity>
       )}
-      {/* Create Snap Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={createModalVisible}
-        onRequestClose={() => setCreateModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create Snap</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="What's on your mind?"
-              value={newSnapMessage}
-              onChangeText={setNewSnapMessage}
-              multiline
-            />
-            {loadingCreateModal ? (
-              <ActivityIndicator size="large" color="#65558F" />
-            ) : (
-              <Button
-                mode="contained"
-                onPress={handleSubmitSnap}
-                buttonColor="#65558F"
-                textColor="#FFFFFF"
-                style={styles.modalButton}
-              >
-                Create Snap
-              </Button>
-            )}
-            <Button mode="text" onPress={() => setCreateModalVisible(false)} style={styles.cancelButton}>
-              Cancel
-            </Button>
-          </View>
-        </View>
-      </Modal>
-      {/* Edit Snap Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Snap</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Edit your snap..."
-              value={editedSnapMessage}
-              onChangeText={setEditedSnapMessage}
-              multiline
-            />
-            {loadingEditModal ? (
-              <ActivityIndicator size="large" color="#65558F" />
-            ) : (
-              <Button
-                mode="contained"
-                onPress={handleSubmitEditSnap}
-                buttonColor="#65558F"
-                textColor="#FFFFFF"
-                style={styles.modalButton}
-              >
-                Save Changes
-              </Button>
-            )}
-            <Button mode="text" onPress={() => setEditModalVisible(false)} style={styles.cancelButton}>
-              Cancel
-            </Button>
-          </View>
-        </View>
-      </Modal>
-      {/* Delete Snap Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={deleteModalVisible}
-        onRequestClose={() => setDeleteModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Deletion</Text>
-            <Text style={{ marginBottom: 20, color: 'black' }}>Are you sure you want to delete this snap?</Text>
-            {loadingDeleteModal ? (
-              <ActivityIndicator size="large" color="#65558F" />
-            ) : (
-              <Button
-                mode="contained"
-                onPress={handleConfirmDeleteSnap}
-                buttonColor="#FF6347"
-                textColor="#FFFFFF"
-                style={styles.modalButton}
-              >
-                Delete
-              </Button>
-            )}
-            <Button
-              mode="text"
-              onPress={() => setDeleteModalVisible(false)}
-              style={styles.cancelButton}
-            >
-              Cancel
-            </Button>
-          </View>
-        </View>
-      </Modal>
+      <CreateSnapModal
+        showSnackbar={showSnackbar}
+        createModalVisible={createModalVisible}
+        setCreateModalVisible={setCreateModalVisible}
+        loadSnaps={loadSnaps}
+      />
+      <EditSnapModal
+        showSnackbar={showSnackbar}
+        editModalVisible={editModalVisible}
+        setEditModalVisible={setEditModalVisible}
+        editedSnap={editedSnap}
+        editedSnapMessage={editedSnapMessage}
+        setEditedSnapMessage={setEditedSnapMessage}
+        loadSnaps={loadSnaps}
+      />
+      <DeleteSnapModal
+        showSnackbar={showSnackbar}
+        deleteModalVisible={deleteModalVisible}
+        setDeleteModalVisible={setDeleteModalVisible}
+        snapToDelete={snapToDelete}
+        setSnapToDelete={setSnapToDelete}
+        loadSnaps={loadSnaps}
+      />
     </View>
   );
 }
@@ -609,42 +413,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: 'black',
-  },
-  textInput: {
-    width: '100%',
-    textAlignVertical: 'top',
-    height: 100,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  modalButton: {
-    marginTop: 20,
-    paddingHorizontal: 20
-  },
-  cancelButton: {
-    marginTop: 10
   },
   input: { 
     marginVertical: 10,
