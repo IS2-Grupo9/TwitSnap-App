@@ -99,159 +99,6 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
   );
 }
 
-interface SearchSnapsProps {
-  showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (targetUser: string) => void;
-}
-
-function SearchSnaps({ showSnackbar, targetUser, setTargetUser }: SearchSnapsProps) {
-  const { auth } = useAuth();
-  const [trigger, setTrigger] = useState(false);
-  const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = async () => {
-    try {
-      const response = await fetch(`${postsApiUrl}/search/text?text=${searchQuery}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data?.data
-      } else {
-        const error = await response.json();
-        showSnackbar('Error searching snaps.', 'error');
-        console.log('Error searching snaps:', error);
-        return [];
-      }
-    }
-    catch (error: any) {
-      showSnackbar('Error searching snaps.', 'error');
-      console.error('Error searching snaps:', error.message);
-      return [];
-    }
-  }
-
-  const triggerSearch = async () => {
-    setTrigger(true);
-  }
-
-  // TODO: Put search text input inside snap view component
-
-  return (
-    <View style={styles.tabContainer}>
-      <TextInput
-        style={styles.input}
-        value={searchQuery}
-        right={<TextInput.Icon icon="magnify" onPress={triggerSearch} />}
-        onChangeText={setSearchQuery}
-        label="Search Snaps"
-        mode="outlined"
-        underlineColor='black'
-        activeUnderlineColor='black'
-        activeOutlineColor='#65558F'
-        textColor='black'
-        placeholderTextColor='black'
-        theme={{
-          colors: {
-            background: 'white',
-            onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
-          },
-        }}
-      />
-      <SnapsView
-        showSnackbar={showSnackbar}
-        targetUser={targetUser}
-        setTargetUser={setTargetUser}
-        fetchSnaps={handleSearch}
-        trigger={trigger}
-        setTrigger={setTrigger}
-        feed={false}
-      />
-    </View>
-  );
-}
-
-interface SearchHashtagProps {
-  showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (targetUser: string) => void;
-}
-
-function SearchHashtag({ showSnackbar, targetUser, setTargetUser }: SearchHashtagProps) {
-  const { auth } = useAuth();
-  const [trigger, setTrigger] = useState(false);
-  const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = async () => {
-    try {
-      const response = await fetch(`${postsApiUrl}/search/hashtag?hashtag=${searchQuery}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data?.data
-      } else {
-        const error = await response.json();
-        showSnackbar('Error searching snaps.', 'error');
-        console.log('Error searching snaps:', error);
-        return [];
-      }
-    }
-    catch (error: any) {
-      showSnackbar('Error searching snaps.', 'error');
-      console.error('Error searching snaps:', error.message);
-      return [];
-    }
-  }
-
-  const triggerSearch = async () => {
-    setTrigger(true);
-  }
-
-  return (
-    <View style={styles.tabContainer}>
-      <TextInput
-        style={styles.input}
-        value={searchQuery}
-        right={<TextInput.Icon icon="magnify" onPress={triggerSearch} />}
-        onChangeText={setSearchQuery}
-        label="Search Hashtag"
-        mode="outlined"
-        underlineColor='black'
-        activeUnderlineColor='black'
-        activeOutlineColor='#65558F'
-        textColor='black'
-        placeholderTextColor='black'
-        theme={{
-          colors: {
-            background: 'white',
-            onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
-          },
-        }}
-      />
-      <SnapsView
-        showSnackbar={showSnackbar}
-        targetUser={targetUser}
-        setTargetUser={setTargetUser}
-        fetchSnaps={handleSearch}
-        trigger={trigger}
-        setTrigger={setTrigger}
-        feed={false}
-      />
-    </View>
-  );
-}
- 
-
 interface ExploreScreenProps {
   showSnackbar: (message: string, type: string) => void;
   targetUser: string;
@@ -283,20 +130,24 @@ export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser 
         name="Snaps" 
         options={{ tabBarIcon: () => <Ionicons name="document-text-outline" size={20} /> }} 
       >
-        {() => <SearchSnaps
+        {() => <SnapsView
           showSnackbar={showSnackbar}
           targetUser={targetUser}
           setTargetUser={setTargetUser}
+          feed={false}
+          searchType='text'
         />}
       </Tab.Screen>
       <Tab.Screen 
         name="Hashtags" 
         options={{ tabBarIcon: () => <Text style={styles.icon}>#</Text> }}
       >
-        {() => <SearchHashtag
+        {() => <SnapsView
           showSnackbar={showSnackbar}
           targetUser={targetUser}
           setTargetUser={setTargetUser}
+          feed={false}
+          searchType='hashtag'
         />}
       </Tab.Screen>
     </Tab.Navigator>
