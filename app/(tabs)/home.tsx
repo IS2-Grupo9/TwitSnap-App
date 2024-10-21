@@ -5,27 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
-
-interface Snap {
-  ID: number;
-  message: string;
-  user: string;
-  created_at: string;
-  updated_at: string;
-  username?: string;
-  liked?: boolean;
-  editable?: boolean;
-}
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  location: string;
-  interests: string;
-  created_at: string;
-  updated_at: string;
-}
+import { ExtendedSnap } from '@/components/types/models';
 
 interface HomeScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -35,7 +15,7 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: HomeScreenProps) {
   const { auth } = useAuth();
-  const [snaps, setSnaps] = useState<Snap[]>([]);
+  const [snaps, setSnaps] = useState<ExtendedSnap[]>([]);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   
@@ -47,7 +27,7 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
   const [loadingCreateModal, setLoadingCreateModal] = useState(false);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editedSnap, setEditedSnap] = useState<Snap | null>(null);
+  const [editedSnap, setEditedSnap] = useState<ExtendedSnap | null>(null);
   const [editedSnapMessage, setEditedSnapMessage] = useState('');
   const [loadingEditModal, setLoadingEditModal] = useState(false);
 
@@ -101,37 +81,42 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
 
   const fetchSnaps = async () => {
     setLoading(true);
-    const response = await fetch(`${postsApiUrl}/snaps`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch(`${postsApiUrl}/snaps`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch snaps.', 'error');
+        setLoading(false);
+        return;
+      }
+      const snaps = await response.json();
+      const userNames = await fetchUsersById(snaps.data?.map((snap: any) => snap.user));
+      const completedSnaps = snaps.data?.map((snap: any) => ({
+        ...snap,
+        liked: false,
+        editable: snap.user === String(auth.user?.id),
+        username: userNames[snap.user] || 'Unknown',
+      }));
+      completedSnaps.sort((a: ExtendedSnap, b: ExtendedSnap) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      setSnaps(completedSnaps);
+      setLoading(false);
+    } catch (error) {
       showSnackbar('Failed to fetch snaps.', 'error');
       setLoading(false);
-      return;
     }
-    const snaps = await response.json();
-    const userNames = await fetchUsersById(snaps.data?.map((snap: any) => snap.user));
-    const completedSnaps = snaps.data?.map((snap: any) => ({
-      ...snap,
-      liked: false,
-      editable: snap.user === String(auth.user?.id),
-      username: userNames[snap.user] || 'Unknown',
-    }));
-    completedSnaps.sort((a: Snap, b: Snap) => {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-    setSnaps(completedSnaps);
-    setLoading(false);
   };
 
   const handleCreateSnap = () => {
     setCreateModalVisible(true);
   };
 
-  const handleEditSnap = (snap: Snap) => {
+  const handleEditSnap = (snap: ExtendedSnap) => {
     setEditModalVisible(true);
     setEditedSnap(snap);
     setEditedSnapMessage(snap.message);
@@ -180,7 +165,7 @@ export default function HomeScreen({ showSnackbar, targetUser, setTargetUser }: 
 
   const handleSubmitEditSnap = async () => {
     setLoadingEditModal(true);
-    try{
+    try {
       if (!editedSnapMessage.trim()) {
         showSnackbar('Snap message cannot be empty!', 'error');
         return;

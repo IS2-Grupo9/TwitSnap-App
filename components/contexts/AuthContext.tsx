@@ -1,12 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface User {
-  id: number;
-  username: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { User } from '../types/models';
 
 interface AuthState {
   token: string | null;

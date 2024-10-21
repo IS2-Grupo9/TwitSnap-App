@@ -4,26 +4,9 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { TextInput, Button } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/components/contexts/AuthContext';
+import { Snap, User } from '@/components/types/models';
 
 const Tab = createMaterialTopTabNavigator();
-
-interface Snap {
-  ID: number;
-  message: string;
-  user: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  location: string;
-  interests: string;
-  created_at: string;
-  updated_at: string;
-}
 
 function SearchUsers() {
   const { auth } = useAuth();
