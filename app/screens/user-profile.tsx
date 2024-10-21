@@ -4,6 +4,7 @@ import { ActivityIndicator, Button, Card, Chip } from 'react-native-paper';
 import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { User } from '@/components/types/models';
 
 interface UserProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -13,12 +14,16 @@ interface UserProfileScreenProps {
 export default function UserProfileScreen({ showSnackbar, targetUser }: UserProfileScreenProps) {
   const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [createdAt, setCreatedAt] = useState('');
-  const [updatedAt, setUpdatedAt] = useState('');
-  const [location, setLocation] = useState('Not specified');
-  const [interests, setInterests] = useState([]);
+  const [user, setUser] = useState<User>({
+    id: 0,
+    username: '',
+    email: '',
+    location: 'Not specified',
+    interests: '',
+    createdAt: '',
+    updatedAt: '',
+  });
+  const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(false);
   // TODO: Implement following functionality with interactions API
   const [following, setFollowing] = useState(false);
@@ -49,13 +54,9 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
       });
       if (response.ok) {
         const data = await response.json();
-        setUsername(data.username);
-        setEmail(data.email);
-        setCreatedAt(data.createdAt);
-        setUpdatedAt(data.updatedAt);
-        setLocation(data.location || 'Not specified');
+        setUser(data);
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
-        setInterests(interests);
+        setParsedInterests(interests);
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
@@ -79,14 +80,14 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
         ) : (
           <View style={styles.avatarContainer}>
             <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
-            <Text style={styles.title}>{username}</Text>
-            <Text style={styles.subtitle}>{email}</Text>
-            <Text style={styles.subtitle}>Location: {location}</Text>
-            <Text style={styles.subtitle}>Join date: {formatDate(createdAt)}</Text>
-            <Text style={styles.subtitle}>Last updated: {formatDate(updatedAt)}</Text>
+            <Text style={styles.title}>{user.username}</Text>
+            <Text style={styles.subtitle}>{user.email}</Text>
+            <Text style={styles.subtitle}>Location: {user.location}</Text>
+            <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
+            <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
             <Text style={styles.sectionTitle}>Interests</Text>
             <ScrollView horizontal={true} style={styles.chipContainer}>
-              {interests.map((interest, index) => (
+              {parsedInterests.map((interest, index) => (
                 <Chip
                   key={index}
                   style={styles.chip}

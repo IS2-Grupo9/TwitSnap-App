@@ -18,6 +18,6 @@ export interface User {
     email: string;
     location: string;
     interests: string;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
 }

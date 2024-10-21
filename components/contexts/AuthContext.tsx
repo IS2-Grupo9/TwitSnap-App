@@ -11,6 +11,7 @@ interface AuthContextType {
   auth: AuthState;
   login: (authData: AuthState) => void;
   logout: () => void;
+  updateUserData: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +38,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUserData = async (user: User) => {
+    try {
+      const storedAuthData = await AsyncStorage.getItem('authData');
+      if (storedAuthData) {
+        const authData = JSON.parse(storedAuthData);
+        authData.user = user;
+        await AsyncStorage.setItem('authData', JSON.stringify(authData));
+        setAuth(authData);
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
+  }
+
   useEffect(() => {
     const loadAuthData = async () => {
       try {
@@ -52,7 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, login, logout, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );

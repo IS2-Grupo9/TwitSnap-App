@@ -4,23 +4,28 @@ import { ActivityIndicator, Button, Card, Chip } from 'react-native-paper';
 import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { User } from '@/components/types/models';
 
 interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
 }
 
 export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) {
-  const { auth } = useAuth();
+  const { auth, updateUserData } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [isModalVisible, setModalVisible] = useState(false);
-  const [username, setUsername] = useState('');
-  const [usernameInput, setUsernameInput] = useState(username);
-  const [email, setEmail] = useState('');
-  const [createdAt, setCreatedAt] = useState('');
-  const [updatedAt, setUpdatedAt] = useState('');
-  const [location, setLocation] = useState('Not specified');
-  const [locationInput, setLocationInput] = useState(location);
-  const [interests, setInterests] = useState([]);
+  const [user, setUser] = useState<User>({
+    id: 0,
+    username: '',
+    email: '',
+    location: 'Not specified',
+    interests: '',
+    createdAt: '',
+    updatedAt: '',
+  });
+  const [parsedInterests, setParsedInterests] = useState<string[]>([]);
+  const [usernameInput, setUsernameInput] = useState(user.username);
+  const [locationInput, setLocationInput] = useState(user.location);
   const [interestInput, setInterestInput] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
@@ -90,15 +95,12 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
       });
       if (response.ok) {
         const data = await response.json();
-        setUsername(data.username);
         setUsernameInput(data.username);
-        setEmail(data.email);
-        setCreatedAt(data.createdAt);
-        setUpdatedAt(data.updatedAt);
-        setLocation(data.location || 'Not specified');
         setLocationInput(data.location || 'Not specified');
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
-        setInterests(interests);
+        setUser(data);
+        updateUserData(data);
+        setParsedInterests(interests);
         setInterestInput(data.interests ? interests.join(', ') : '');
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
@@ -123,14 +125,14 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
         ) : (
           <View style={styles.avatarContainer}>
             <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
-            <Text style={styles.title}>{username}</Text>
-            <Text style={styles.subtitle}>{email}</Text>
-            <Text style={styles.subtitle}>Location: {location}</Text>
-            <Text style={styles.subtitle}>Join date: {formatDate(createdAt)}</Text>
-            <Text style={styles.subtitle}>Last updated: {formatDate(updatedAt)}</Text>
+            <Text style={styles.title}>{user.username}</Text>
+            <Text style={styles.subtitle}>{user.email}</Text>
+            <Text style={styles.subtitle}>Location: {user.location}</Text>
+            <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
+            <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
             <Text style={styles.sectionTitle}>Interests</Text>
             <ScrollView horizontal={true} style={styles.chipContainer}>
-              {interests.map((interest, index) => (
+              {parsedInterests.map((interest, index) => (
                 <Chip
                   key={index}
                   style={styles.chip}
