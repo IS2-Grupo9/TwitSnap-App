@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { ExtendedSnap, Snap, User } from '@/components/types/models';
 import SnapsView from '@/components/SnapsView';
+import UsersView from '@/components/UsersView';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -77,24 +78,14 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
           },
         }}
       />
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleSearch} colors={['#65558F']} />
-        }
-      >
-        {users.map((user) => (
-          <View key={user.id} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#65558F' }}>{user.username}</Text>
-            <Text style={{ fontSize: 14, color: '#65558F' }}>{user.email}</Text>
-          </View>
-        ))}
-        <View style={{ height: 100 }}>
-          <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-            {users.length === 0 && searchMade ? 'No users found' : ''}
-          </Text>
-        </View>
-      </ScrollView>
+      <UsersView
+        users={users}
+        loading={loading}
+        selectedUser={targetUser}
+        setSelectedUser={setTargetUser}
+        search={true}
+        searchMade={searchMade}
+      />    
     </View>
   );
 }
@@ -157,7 +148,6 @@ export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 30, backgroundColor: '#f0f0f0' },
   title: { fontSize: 32, fontWeight: 'bold', lineHeight: 32, color: '#65558F' },
-  scrollView: { flex: 1 },
   subtitle: { fontSize: 20, fontWeight: 'bold', color: '#65558F', marginBottom: 20 },
   tabContainer: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: 'white' },
   icon: { fontSize: 20, alignSelf: 'center', lineHeight: 25 },
