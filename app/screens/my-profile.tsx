@@ -27,7 +27,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
   const [usernameInput, setUsernameInput] = useState(user.username);
   const [locationInput, setLocationInput] = useState(user.location);
   const [interestInput, setInterestInput] = useState('');
-  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
   const formatDate = (dateString: string | undefined) => {

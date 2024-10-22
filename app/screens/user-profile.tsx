@@ -24,7 +24,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
     updatedAt: '',
   });
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
-  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   // TODO: Implement following functionality with interactions API
   const [following, setFollowing] = useState(false);
 
