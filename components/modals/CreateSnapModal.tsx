@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Modal, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Modal, TextInput, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types/models';
 import UsersView from '../UsersView';
-import { SearchBar } from 'react-native-screens';
 
 interface CreateSnapModalProps {
     showSnackbar: (message: string, type: string) => void;
@@ -88,6 +87,8 @@ export default function CreateSnapModal({
         });
         if (response.ok) {
           const data = await response.json();
+          // Only keep the first 5 results
+          data.splice(5);
           setSuggestedUsers(data);
           setSuggestedSearchMade(true);
         } else {
@@ -159,7 +160,7 @@ export default function CreateSnapModal({
               multiline
             />
             {loadingCreateModal ? (
-            <ActivityIndicator size="large" color="#65558F" />
+              <ActivityIndicator size="large" color="#65558F" />
             ) : (
             <Button
               mode="contained"
@@ -179,15 +180,19 @@ export default function CreateSnapModal({
         {suggestedUsersVisible && (
             <View style={styles.suggestionsContainer}>
               {loadingSuggestedUsers ? (
-                <ActivityIndicator size="small" color="#65558F" />
+                <ActivityIndicator size="small" color="#65558F" style={{ marginVertical: 20 }} />
               ) : (
-                <UsersView
-                  users={suggestedUsers}
-                  setSelectedUser={selectUser}
-                  loading={loadingSuggestedUsers}
-                  search={false}
-                  searchMade={suggestedSearchMade}
-                />
+                <ScrollView
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <UsersView
+                    users={suggestedUsers}
+                    setSelectedUser={selectUser}
+                    loading={loadingSuggestedUsers}
+                    search={false}
+                    searchMade={suggestedSearchMade}
+                  />
+                </ScrollView>
               )}
             </View>
           )}
@@ -239,12 +244,13 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     position: 'absolute',
-    top: 140,
-    width: '100%',
     backgroundColor: 'white',
+    borderColor: '#65558F',
     borderWidth: 1,
-    borderRadius: 5,
-    maxHeight: 150,
+    top: '75%',
+    left: '25%',
+    width: '50%',
+    maxHeight: 100,
     zIndex: 1000,
   },
 });
