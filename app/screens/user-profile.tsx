@@ -81,8 +81,8 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
           <View style={styles.avatarContainer}>
             <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
             <Text style={styles.title}>{user.username}</Text>
-            <Text style={styles.subtitle}>{user.email}</Text>
-            <Text style={styles.subtitle}>Location: {user.location}</Text>
+            {/* <Text style={styles.subtitle}>{user.email}</Text>
+              <Text style={styles.subtitle}>Location: {user.location}</Text> */}
             <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
             <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
             <Text style={styles.sectionTitle}>Interests</Text>
