@@ -82,6 +82,7 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
             onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
           },
         }}
+        onSubmitEditing={handleSearch}
       />
       <UsersView
         users={users}
