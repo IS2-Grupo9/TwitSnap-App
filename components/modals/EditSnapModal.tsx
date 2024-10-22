@@ -34,6 +34,8 @@ export default function EditSnapModal({
       try {
         if (!editedSnapMessage.trim()) {
           showSnackbar('Snap message cannot be empty!', 'error');
+          setLoadingEditModal(false);
+          setEditModalVisible(false);
           return;
         }
 

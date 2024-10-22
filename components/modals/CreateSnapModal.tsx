@@ -38,6 +38,8 @@ export default function CreateSnapModal({
       try {
         if (!newSnapMessage.trim()) {
           showSnackbar('Snap message cannot be empty!', 'error');
+          setLoadingCreateModal(false);
+          setCreateModalVisible(false);
           return;
         }
   
