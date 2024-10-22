@@ -59,6 +59,7 @@ export default function UsersView({
       ) : (
         <ScrollView
           style={styles.scrollView}
+          keyboardShouldPersistTaps="handled"
         >
           {users.map((user) => (
             <Card key={user.id}>

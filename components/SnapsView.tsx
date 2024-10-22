@@ -257,6 +257,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
             refreshControl={feed ? (
               <RefreshControl refreshing={loading} onRefresh={loadSnaps} colors={['#65558F']} />
             ) : undefined}
+            keyboardShouldPersistTaps="handled"
           >
             {snaps.map(snap => (
               <Card key={snap.ID} style={styles.snapCard}>
