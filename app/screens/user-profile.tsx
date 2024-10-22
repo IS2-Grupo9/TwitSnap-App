@@ -14,6 +14,7 @@ interface UserProfileScreenProps {
 export default function UserProfileScreen({ showSnackbar, targetUser }: UserProfileScreenProps) {
   const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [user, setUser] = useState<User>({
     id: 0,
     username: '',
@@ -25,7 +26,6 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
   });
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  // TODO: Implement following functionality with interactions API
   const [following, setFollowing] = useState(false);
 
   const formatDate = (dateString: string | undefined) => {
@@ -57,6 +57,20 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
         setUser(data);
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
         setParsedInterests(interests);
+        const followingResponse = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/follows`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (followingResponse.status === 200) {
+          const followingData = await followingResponse.json();
+          setFollowing(followingData.data.some((follow: any) => follow.followed_id === targetUser));
+        } else if (followingResponse.status === 404) {
+          setFollowing(false);
+        } else {
+          showSnackbar('Failed to fetch follow data.', 'error');
+        }
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
@@ -66,6 +80,54 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
       setLoadingProfile(false);
     }
   };
+
+  const handleFollow = async () => {
+    try {
+      const response = await fetch(`${interactionsApiUrl}/interactions/follow`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          follower_id: auth.user?.id,
+          followed_id: targetUser,
+        }),
+      });
+
+      if (response.ok) {
+        setFollowing(true);
+        showSnackbar('User followed.', 'success');
+      } else {
+        showSnackbar('Failed to follow user.', 'error');
+      }
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+    }
+  }
+
+  const handleUnfollow = async () => {
+    try {
+      const response = await fetch(`${interactionsApiUrl}/interactions/unfollow`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          follower_id: auth.user?.id,
+          followed_id: targetUser,
+        }),
+      });
+
+      if (response.ok) {
+        setFollowing(false);
+        showSnackbar('User unfollowed.', 'success');
+      } else {
+        showSnackbar('Failed to unfollow user.', 'error');
+      }
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+    }
+  }
 
   useEffect(() => {
     fetchProfile();
@@ -101,7 +163,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
             <Button
               mode="contained"
               style={styles.followButton}
-              onPress={() => setFollowing(!following)}
+              onPress={() => following ? handleUnfollow() : handleFollow()}
             >
               {following ? 'Unfollow' : 'Follow'}
             </Button>
