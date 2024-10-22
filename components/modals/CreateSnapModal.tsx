@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Modal, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,6 +32,7 @@ export default function CreateSnapModal({
     const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
     const [suggestedSearchMade, setSuggestedSearchMade] = useState(false);
 
+    const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSubmitSnap = async () => {
       setLoadingCreateModal(true);
@@ -107,17 +108,24 @@ export default function CreateSnapModal({
 
     const handleTextChange = async (newSnapMessage: string) => {
       setNewSnapMessage(newSnapMessage);
+      setSuggestedUsersVisible(false);
       try { 
-        // Check the last word, if it starts with '@', show suggested users
-        const cursorPosition = newSnapMessage.length;
-        const textBeforeCursor = newSnapMessage.substring(0, cursorPosition);
-        const lastWordBeforeCursor = textBeforeCursor.split(' ').pop();        
-        if (lastWordBeforeCursor?.startsWith('@') && lastWordBeforeCursor.length > 1) {
-          setSuggestedUsersVisible(true);
-          await searchUsers(lastWordBeforeCursor.substring(1));
-        } else {
-          setSuggestedUsersVisible(false);
+        // Use a timeout to debounce the search
+        if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
         }
+        debounceTimeoutRef.current = setTimeout(async () => {
+          const cursorPosition = newSnapMessage.length;
+          const textBeforeCursor = newSnapMessage.substring(0, cursorPosition);
+          const lastWordBeforeCursor = textBeforeCursor.split(' ').pop();      
+          // Check the last word, if it starts with '@', show suggested users  
+          if (lastWordBeforeCursor?.startsWith('@') && lastWordBeforeCursor.length > 1) {
+            setSuggestedUsersVisible(true);
+            await searchUsers(lastWordBeforeCursor.substring(1));
+          } else {
+            setSuggestedUsersVisible(false);
+          }
+        }, 500);  
       }
       catch (error: any) {
         showSnackbar('Error getting user suggestions:', 'error');
