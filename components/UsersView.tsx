@@ -8,24 +8,22 @@ import { ActivityIndicator, Card, TouchableRipple } from 'react-native-paper';
 
 interface UsersViewProps {
   users: User[];
-  loading: boolean;
   setSelectedUser: (user: string) => void;
-  search?: boolean;
-  searchMade?: boolean;
+  redirect: boolean | true;
+  searchMade: boolean | false;
 }
 
 export default function UsersView({
   users,
-  loading,
   setSelectedUser,
-  search,
+  redirect,
   searchMade,
 }: UsersViewProps) {
   const { auth } = useAuth();
   const navigation = useNavigation();
 
   const handleSelectUser = (user: User) => {
-    if (search) {
+    if (redirect) {
       goToProfile(user.id.toString());
     } else {
       setSelectedUser(user.username);
@@ -49,49 +47,38 @@ export default function UsersView({
   useEffect(() => {}, [users]);
 
   return (
-    <View style={search ? styles.scrollContainer : styles.smallScrollContainer}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#65558F" />
-      ) : (
-        // TODO: ScrollView might not be necessary here, take it out of the component
-        <ScrollView
-          style={styles.scrollView}
-          keyboardShouldPersistTaps="handled"
-        >
-          {users.map((user) => (
-            <Card key={user.id}>
-              <TouchableRipple
-                onPress={() => handleSelectUser(user)}
-                rippleColor={'rgba(0, 0, 0, .10)'}
-                style={search ? styles.userCard : styles.smallUserCard}
-              >
-                <Card.Title
-                  title={<Text style={search ? styles.title : styles.smallTitle}>{user.username}</Text>}
-                  left={() => (
-                    <Image
-                      style={search ? styles.avatar : styles.smallAvatar}
-                      source={require('@/assets/images/avatar.png')}
-                    />
-                  )}
+    <View style={redirect ? styles.container : styles.smallContainer}>
+      {users.map((user) => (
+        <Card key={user.id}>
+          <TouchableRipple
+            onPress={() => handleSelectUser(user)}
+            rippleColor={'rgba(0, 0, 0, .10)'}
+            style={redirect ? styles.userCard : styles.smallUserCard}
+          >
+            <Card.Title
+              title={<Text style={redirect ? styles.title : styles.smallTitle}>{user.username}</Text>}
+              left={() => (
+                <Image
+                  style={redirect ? styles.avatar : styles.smallAvatar}
+                  source={require('@/assets/images/avatar.png')}
                 />
-              </TouchableRipple>
-            </Card>
-          ))}
-          {users.length === 0 && searchMade ?
-          <View style={{ height: 100 }}>
-            <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-              No users found
-            </Text>
-          </View>
-          : null}
-        </ScrollView>
-      )}
+              )}
+            />
+          </TouchableRipple>
+        </Card>
+      ))}
+      {users.length === 0 && searchMade ?
+      <View style={{ height: 100 }}>
+        <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
+          No users found
+        </Text>
+      </View>
+      : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: { flex: 1 },
   userCard: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -127,12 +114,12 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
   },
-  scrollContainer: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     marginTop: 20,
   },
-  smallScrollContainer: {
+  smallContainer: {
     flex: 1,
     justifyContent: 'center',
   },

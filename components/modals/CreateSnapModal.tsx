@@ -190,8 +190,7 @@ export default function CreateSnapModal({
                   <UsersView
                     users={suggestedUsers}
                     setSelectedUser={selectUser}
-                    loading={loadingSuggestedUsers}
-                    search={false}
+                    redirect={false}
                     searchMade={suggestedSearchMade}
                   />
                 </ScrollView>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { TextInput, Button } from 'react-native-paper';
+import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { ExtendedSnap, Snap, User } from '@/components/types/models';
@@ -84,13 +84,21 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
         }}
         onSubmitEditing={handleSearch}
       />
-      <UsersView
-        users={users}
-        loading={loading}
-        setSelectedUser={setTargetUser}
-        search={true}
-        searchMade={searchMade}
-      />    
+      {loading ? (
+        <ActivityIndicator size="large" color="#65558F" />
+      ) : (
+        <ScrollView
+          style={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <UsersView
+            users={users}
+            setSelectedUser={setTargetUser}
+            redirect={true}
+            searchMade={searchMade}
+          />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -157,4 +165,5 @@ const styles = StyleSheet.create({
   tabContainer: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: 'white' },
   icon: { fontSize: 20, alignSelf: 'center', lineHeight: 25 },
   input: { marginVertical: 10, backgroundColor: 'transparent' },
+  scrollContainer: { flex: 1, backgroundColor: 'white' },
 });
