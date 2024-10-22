@@ -81,7 +81,6 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
       <UsersView
         users={users}
         loading={loading}
-        selectedUser={targetUser}
         setSelectedUser={setTargetUser}
         search={true}
         searchMade={searchMade}

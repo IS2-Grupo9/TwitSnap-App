@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Modal, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
+import { User } from '../types/models';
+import UsersView from '../UsersView';
+import { SearchBar } from 'react-native-screens';
 
 interface CreateSnapModalProps {
     showSnackbar: (message: string, type: string) => void;
@@ -18,10 +21,17 @@ export default function CreateSnapModal({
 }: CreateSnapModalProps) {
     const { auth } = useAuth();
     
+    const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL
     const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
     const [newSnapMessage, setNewSnapMessage] = useState('');
     const [loadingCreateModal, setLoadingCreateModal] = useState(false);
+
+    const [suggestedUsersVisible, setSuggestedUsersVisible] = useState(false);
+    const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+    const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
+    const [suggestedSearchMade, setSuggestedSearchMade] = useState(false);
+
 
     const handleSubmitSnap = async () => {
       setLoadingCreateModal(true);
@@ -62,6 +72,66 @@ export default function CreateSnapModal({
         setLoadingCreateModal(false);
       }
     };
+
+    const searchUsers = async (searchQuery: string) => {
+      try {
+        setLoadingSuggestedUsers(true);
+        const response = await fetch(`${apiUrl}/users/search?username=${searchQuery}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${auth.token}`,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',          
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSuggestedUsers(data);
+          setSuggestedSearchMade(true);
+        } else {
+          const error = await response.json();
+          setSuggestedUsers([]);
+          setSuggestedSearchMade(true);
+        }
+      }
+      catch (error: any) {
+        showSnackbar('Error getting user suggestions:', 'error');
+        console.error('Error getting user suggestions:', error.message);
+      }
+      finally {
+        setLoadingSuggestedUsers(false);
+      }
+    }
+
+
+    const handleTextChange = async (newSnapMessage: string) => {
+      setNewSnapMessage(newSnapMessage);
+      try { 
+        // Check the last word, if it starts with '@', show suggested users
+        const cursorPosition = newSnapMessage.length;
+        const textBeforeCursor = newSnapMessage.substring(0, cursorPosition);
+        const lastWordBeforeCursor = textBeforeCursor.split(' ').pop();        
+        if (lastWordBeforeCursor?.startsWith('@') && lastWordBeforeCursor.length > 1) {
+          setSuggestedUsersVisible(true);
+          await searchUsers(lastWordBeforeCursor.substring(1));
+        } else {
+          setSuggestedUsersVisible(false);
+        }
+      }
+      catch (error: any) {
+        showSnackbar('Error getting user suggestions:', 'error');
+        console.error('Error getting user suggestions:', error.message);
+      }     
+    }
+
+    const selectUser = (username: string) => {
+      const lastAt = newSnapMessage.lastIndexOf('@');
+      if (lastAt === -1) return;
+      const newText = newSnapMessage.substring(0, lastAt) + `@${username} `;
+      setNewSnapMessage(newText);
+      setSuggestedUsersVisible(false);
+    }
   
     return (
       <Modal
@@ -77,7 +147,7 @@ export default function CreateSnapModal({
               style={styles.textInput}
               placeholder="What's on your mind?"
               value={newSnapMessage}
-              onChangeText={setNewSnapMessage}
+              onChangeText={handleTextChange}
               multiline
             />
             {loadingCreateModal ? (
@@ -98,6 +168,21 @@ export default function CreateSnapModal({
             </Button>
           </View>
         </View>
+        {suggestedUsersVisible && (
+            <View style={styles.suggestionsContainer}>
+              {loadingSuggestedUsers ? (
+                <ActivityIndicator size="small" color="#65558F" />
+              ) : (
+                <UsersView
+                  users={suggestedUsers}
+                  setSelectedUser={selectUser}
+                  loading={loadingSuggestedUsers}
+                  search={false}
+                  searchMade={suggestedSearchMade}
+                />
+              )}
+            </View>
+          )}
       </Modal>
     );
 
@@ -143,5 +228,15 @@ const styles = StyleSheet.create({
   input: { 
     marginVertical: 10,
     backgroundColor: 'transparent' 
+  },
+  suggestionsContainer: {
+    position: 'absolute',
+    top: 140,
+    width: '100%',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderRadius: 5,
+    maxHeight: 150,
+    zIndex: 1000,
   },
 });

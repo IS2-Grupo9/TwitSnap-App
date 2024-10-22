@@ -10,7 +10,6 @@ import { ActivityIndicator, Card, TouchableRipple } from 'react-native-paper'
 interface UsersViewProps {
   users: User[]
   loading: boolean
-  selectedUser: string
   setSelectedUser: (user: string) => void
   search?: boolean
   searchMade?: boolean
@@ -19,7 +18,6 @@ interface UsersViewProps {
 export default function UsersView({
   users,
   loading,
-  selectedUser,
   setSelectedUser,
   search,
   searchMade,
@@ -31,7 +29,7 @@ export default function UsersView({
     if (search) {
       goToProfile(user.id.toString())
     } else {
-      setSelectedUser(user.id.toString())
+      setSelectedUser(user.username)
     }
   }
 
