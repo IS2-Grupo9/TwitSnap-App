@@ -178,7 +178,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       return completedSnaps;
-    } catch (error) {
+    } catch (error : any) {
       showSnackbar('Failed to fetch snaps.', 'error');
       return [];
     }

@@ -84,21 +84,23 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
         }}
         onSubmitEditing={handleSearch}
       />
-      {loading ? (
-        <ActivityIndicator size="large" color="#65558F" />
-      ) : (
-        <ScrollView
-          style={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          <UsersView
-            users={users}
-            setSelectedUser={setTargetUser}
-            redirect={true}
-            searchMade={searchMade}
-          />
-        </ScrollView>
-      )}
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#65558F" />
+        ) : (
+          <ScrollView
+            style={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+          >
+            <UsersView
+              users={users}
+              setSelectedUser={setTargetUser}
+              redirect={true}
+              searchMade={searchMade}
+            />
+          </ScrollView>
+        )}
+      </View>
     </View>
   );
 }
