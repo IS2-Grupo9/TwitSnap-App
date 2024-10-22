@@ -78,8 +78,8 @@ export default function UsersView({
             </Card>
           ))}
           {users.length === 0 && searchMade ?
-          <View style={{ height: 50 }}>
-            <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 10 }}>
+          <View style={{ height: 100 }}>
+            <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
               No users found
             </Text>
           </View>

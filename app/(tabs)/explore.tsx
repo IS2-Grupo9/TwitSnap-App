@@ -26,6 +26,11 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
 
   const handleSearch = async () => {
     try {
+      if (!searchQuery.trim()) {
+        showSnackbar('Please enter a search query.', 'error');
+        return;
+      }
+
       setLoading(true);
       const response = await fetch(`${apiUrl}/users/search?username=${searchQuery}`, {
         method: 'GET',
