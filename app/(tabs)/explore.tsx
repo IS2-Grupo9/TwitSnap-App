@@ -17,7 +17,7 @@ interface SearchUsersProps {
 }
 
 function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersProps) {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -45,6 +45,9 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
         const data = await response.json();
         setUsers(data);
         setSearchMade(true);
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
       } else {
         const error = await response.json();
         showSnackbar('Error searching users.', 'error');
