@@ -157,10 +157,11 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
 
       const followIds = followsIds.concat(followersIds);
       
-      const users = await fetchUsersById(followIds);
-
-      setFollowers(followersIds.map((id: string) => users[id]));
-      setFollowing(followsIds.map((id: string) => users[id]));
+      if (followIds.length > 0) {
+        const users = await fetchUsersById(followIds);
+        setFollowers(followersIds.map((id: string) => users[id]));
+        setFollowing(followsIds.map((id: string) => users[id]));
+      }
     } catch (error) {
       showSnackbar('Failed to fetch follow information.', 'error');
     }
