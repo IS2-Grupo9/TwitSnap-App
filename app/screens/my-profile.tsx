@@ -14,7 +14,7 @@ interface MyProfileScreenProps {
 }
 
 export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUser }: MyProfileScreenProps) {
-  const { auth, updateUserData } = useAuth();
+  const { auth, updateUserData, logout } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [isEditModalVisible, setEditModalVisible] = useState(false);
@@ -79,8 +79,10 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
       } else if (response.status === 400) {
         const message = await response.text();
         showSnackbar(JSON.parse(message).error || 'Invalid input.', 'error');
-      }
-      else {
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+      } else {
         showSnackbar('Failed to update profile. Please try again.', 'error');
       }
     } catch (error) {
@@ -105,16 +107,20 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
           'Pragma': 'no-cache',
         },
       });
-      if (!response.ok) {
-        showSnackbar('Failed to fetch users for follow info.', 'error');
-        return {};
-      } else {
+      if (response.ok) {
         const users = await response.json();
         const userDict: { [key: string]: string } = {};
         users.forEach((user: any) => {
           userDict[user.id] = user;
         });
         return userDict;
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+        return {};
+      } else {
+        showSnackbar('Failed to fetch users for follow info.', 'error');
+        return {};
       }
     } catch (error) {
       showSnackbar('Failed to fetch users for follow info.', 'error');
@@ -182,6 +188,9 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
         setParsedInterests(interests);
         setInterestInput(data.interests ? interests.join(', ') : '');
         await fetchFollowInfo();
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }

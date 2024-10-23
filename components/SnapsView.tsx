@@ -19,7 +19,7 @@ interface SnapsViewProps {
 }
 
 export default function SnapsView({ showSnackbar, targetUser, setTargetUser, feed, searchType }: SnapsViewProps) {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
   const [snaps, setSnaps] = useState<ExtendedSnap[]>([]);
@@ -78,16 +78,20 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
           'Pragma': 'no-cache',
         },
       });
-      if (!response.ok) {
-        showSnackbar('Failed to fetch usernames.', 'error');
-        return {};
-      } else {
+      if (response.ok) {
         const users = await response.json();
         const userDict: { [key: string]: string } = {};
         users.forEach((user: any) => {
           userDict[user.id] = user.username;
         });
         return userDict;
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+        return {};
+      } else {
+        showSnackbar('Failed to fetch usernames.', 'error');
+        return {};
       }
     } catch (error) {
       showSnackbar('Failed to fetch usernames.', 'error');

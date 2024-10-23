@@ -14,7 +14,7 @@ interface UserProfileScreenProps {
 }
 
 export default function UserProfileScreen({ showSnackbar, targetUser, setTargetUser }: UserProfileScreenProps) {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [user, setUser] = useState<User>({
@@ -61,16 +61,20 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
           'Pragma': 'no-cache',
         },
       });
-      if (!response.ok) {
-        showSnackbar('Failed to fetch users for follow info.', 'error');
-        return {};
-      } else {
+      if (response.ok) {
         const users = await response.json();
         const userDict: { [key: string]: string } = {};
         users.forEach((user: any) => {
           userDict[user.id] = user;
         });
         return userDict;
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+        return {};
+      } else {
+        showSnackbar('Failed to fetch users for follow info.', 'error');
+        return {};
       }
     } catch (error) {
       showSnackbar('Failed to fetch users for follow info.', 'error');
@@ -140,6 +144,9 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
         setParsedInterests(interests);
         await fetchFollowInfo();
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }

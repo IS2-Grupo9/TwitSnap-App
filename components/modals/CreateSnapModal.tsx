@@ -18,7 +18,7 @@ export default function CreateSnapModal({
   setCreateModalVisible,
   loadSnaps
 }: CreateSnapModalProps) {
-    const { auth } = useAuth();
+    const { auth, logout } = useAuth();
     
     const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL
     const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
@@ -93,8 +93,10 @@ export default function CreateSnapModal({
           data.splice(5);
           setSuggestedUsers(data);
           setSuggestedSearchMade(true);
+        } else if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
         } else {
-          const error = await response.json();
           setSuggestedUsers([]);
           setSuggestedSearchMade(true);
         }
