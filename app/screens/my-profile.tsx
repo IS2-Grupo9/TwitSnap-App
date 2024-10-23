@@ -13,6 +13,7 @@ interface MyProfileScreenProps {
 export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) {
   const { auth, updateUserData } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [isModalVisible, setModalVisible] = useState(false);
   const [user, setUser] = useState<User>({
     id: 0,
@@ -23,6 +24,8 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     createdAt: '',
     updatedAt: '',
   });
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [usernameInput, setUsernameInput] = useState(user.username);
   const [locationInput, setLocationInput] = useState(user.location);
@@ -81,6 +84,75 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     }
   };
 
+  const fetchUsersById = async (userIds: string[]) => {
+    try {
+      // Remove user IDs that are not numbers and duplicates
+      userIds = userIds.filter((id) => !isNaN(Number(id)));
+      userIds = Array.from(new Set(userIds));
+      const response = await fetch(`${apiUrl}/users/users?ids=${userIds}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch users for follow info.', 'error');
+        return {};
+      } else {
+        const users = await response.json();
+        const userDict: { [key: string]: string } = {};
+        users.forEach((user: any) => {
+          userDict[user.id] = user;
+        });
+        return userDict;
+      }
+    } catch (error) {
+      showSnackbar('Failed to fetch users for follow info.', 'error');
+      return {};
+    }
+  };
+
+  const fetchFollowInfo = async () => {
+    try {
+      const followsResponse = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/follows`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!followsResponse.ok) {
+        showSnackbar('Failed to fetch follow data.', 'error');
+        return;
+      }
+      const followersResponse = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/followers`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!followersResponse.ok) {
+        showSnackbar('Failed to fetch follow data.', 'error');
+        return;
+      }
+      const followsData = await followsResponse.json();
+      const followersData = await followersResponse.json();
+      const followsIds = followsData.data.map((follow: any) => follow.followed_id);
+      const followersIds = followersData.data.map((follow: any) => follow.follower_id);
+
+      const followIds = followsIds.concat(followersIds);
+      
+      const users = await fetchUsersById(followIds);
+
+      setFollowers(followersIds.map((id: string) => users[id]));
+      setFollowing(followsIds.map((id: string) => users[id]));
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+    }
+  }   
+
   const fetchProfile = async () => {
     setLoadingProfile(true);
     try {
@@ -102,6 +174,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
         updateUserData(data);
         setParsedInterests(interests);
         setInterestInput(data.interests ? interests.join(', ') : '');
+        await fetchFollowInfo();
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
@@ -143,6 +216,11 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                 </Chip>
               ))}
             </ScrollView>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+              <Button mode='outlined' labelStyle={styles.followInfo}>Following: {following.length}</Button>
+              <View style={{ width: 10 }} />
+              <Button mode='outlined' labelStyle={styles.followInfo}>Followers: {followers.length}</Button>
+            </View>
             <Button
               mode="contained"
               onPress={() => setModalVisible(true)}
@@ -214,11 +292,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, fontWeight: 'bold', color: '#65558F', textAlign: 'center', marginTop: 10 },
   editButton: { marginTop: 20, paddingHorizontal: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#65558F', marginTop: 20, textAlign: 'left' },
-  chipContainer: { 
-    flexDirection: 'row', 
-    marginTop: 10,
-    maxHeight: 40,
-  },
+  chipContainer: { flexDirection: 'row', marginVertical: 10, maxHeight: 40 },
   chip: { backgroundColor: '#EADDFF', marginRight: 5, color: '#65558F' },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
   modalContent: { width: 300, padding: 20, backgroundColor: '#ffffff', borderRadius: 10, alignItems: 'center' },
@@ -227,4 +301,5 @@ const styles = StyleSheet.create({
   inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold' },
   modalButton: { marginTop: 20, paddingHorizontal: 20 },
   cancelButton: { marginTop: 10 },
+  followInfo: { color: '#65558F', fontWeight: 'bold', fontSize: 16},
 });

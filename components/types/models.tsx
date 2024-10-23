@@ -8,9 +8,10 @@ export interface Snap {
 
 export interface ExtendedSnap extends Snap {
     liked: boolean;
+    shared: boolean;
     editable: boolean;
     username: string;
-  }
+}
 
 export interface User {
     id: number;
