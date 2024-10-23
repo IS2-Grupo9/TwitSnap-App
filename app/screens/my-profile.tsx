@@ -5,16 +5,20 @@ import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
+import UsersView from '@/components/UsersView';
 
 interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
+  targetUser: string;
+  setTargetUser: (user: string) => void;
 }
 
-export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) {
+export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUser }: MyProfileScreenProps) {
   const { auth, updateUserData } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [isFollowInfoModalVisible, setFollowInfoModalVisible] = useState(false);
   const [user, setUser] = useState<User>({
     id: 0,
     username: '',
@@ -32,6 +36,9 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
   const [interestInput, setInterestInput] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
+
+  const [followInfoType, setFollowInfoType] = useState('following');
+  
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -80,7 +87,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
       showSnackbar('An error occurred. Please try again later.', 'error');
     } finally {
       setLoadingEdit(false);
-      setModalVisible(false);
+      setEditModalVisible(false);
     }
   };
 
@@ -217,13 +224,31 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
               ))}
             </ScrollView>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
-              <Button mode='outlined' labelStyle={styles.followInfo}>Following: {following.length}</Button>
+              <Button 
+                mode='outlined'
+                labelStyle={styles.followInfo}
+                onPress={() => {
+                  setFollowInfoType('following');
+                  setFollowInfoModalVisible(true);
+                }}
+              >
+                Following: {following.length}
+              </Button>
               <View style={{ width: 10 }} />
-              <Button mode='outlined' labelStyle={styles.followInfo}>Followers: {followers.length}</Button>
+              <Button
+                mode='outlined'
+                labelStyle={styles.followInfo}
+                onPress={() => {
+                  setFollowInfoType('followers');
+                  setFollowInfoModalVisible(true);
+                }}
+              >
+                Followers: {followers.length}
+              </Button>
             </View>
             <Button
               mode="contained"
-              onPress={() => setModalVisible(true)}
+              onPress={() => setEditModalVisible(true)}
               buttonColor='#65558F'
               textColor='#FFFFFF'
               style={styles.editButton}
@@ -233,7 +258,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
           </View>
         )}
       </LinearGradient>
-      <Modal transparent={true} visible={isModalVisible} animationType="fade">
+      <Modal transparent={true} visible={isEditModalVisible} animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
@@ -274,8 +299,28 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                 Save Changes
               </Button>
             )}
-            <Button mode="text" onPress={() => setModalVisible(false)} style={styles.cancelButton}>
+            <Button mode="text" onPress={() => setEditModalVisible(false)} style={styles.cancelButton}>
               Cancel
+            </Button>
+          </View>
+        </View>
+      </Modal>
+      <Modal transparent={true} visible={isFollowInfoModalVisible} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{followInfoType === 'following' ? 'Following' : 'Followers'}</Text>
+            <ScrollView style={styles.scrollContainer}>
+              <UsersView
+                users={followInfoType === 'following' ? following : followers}
+                setSelectedUser={setTargetUser}
+                redirect={true}
+                small={true}
+                searchMade={true}
+                closeModal={() => setFollowInfoModalVisible(false)}
+              />
+            </ScrollView>
+            <Button mode="text" onPress={() => setFollowInfoModalVisible(false)} style={styles.cancelButton}>
+              Close
             </Button>
           </View>
         </View>
@@ -301,5 +346,7 @@ const styles = StyleSheet.create({
   inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold' },
   modalButton: { marginTop: 20, paddingHorizontal: 20 },
   cancelButton: { marginTop: 10 },
+  scrollContainer: { maxHeight: 300, width: '100%' },
   followInfo: { color: '#65558F', fontWeight: 'bold', fontSize: 16},
+  followInfoModalContent: { height: '40%' },
 });

@@ -96,6 +96,7 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
               users={users}
               setSelectedUser={setTargetUser}
               redirect={true}
+              small={false}
               searchMade={searchMade}
             />
           </ScrollView>

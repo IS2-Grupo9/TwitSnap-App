@@ -191,6 +191,7 @@ export default function CreateSnapModal({
                     users={suggestedUsers}
                     setSelectedUser={selectUser}
                     redirect={false}
+                    small={true}
                     searchMade={suggestedSearchMade}
                   />
                 </ScrollView>

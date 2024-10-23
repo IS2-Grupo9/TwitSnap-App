@@ -59,7 +59,7 @@ const RootLayout: React.FC = () => {
                 {() => <TabLayout showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/my-profile">
-                {() => <MyProfileScreen showSnackbar={showSnackbar} />}
+                {() => <MyProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/user-profile">
                 {() => <UserProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} />}

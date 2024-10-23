@@ -10,20 +10,27 @@ interface UsersViewProps {
   users: User[];
   setSelectedUser: (user: string) => void;
   redirect: boolean | true;
+  small: boolean | false;
   searchMade: boolean | false;
+  closeModal?: () => void | undefined;
 }
 
 export default function UsersView({
   users,
   setSelectedUser,
   redirect,
+  small,
   searchMade,
+  closeModal,
 }: UsersViewProps) {
   const { auth } = useAuth();
   const navigation = useNavigation();
 
   const handleSelectUser = (user: User) => {
     if (redirect) {
+      if (closeModal !== undefined) {
+        closeModal();
+      }
       goToProfile(user.id.toString());
     } else {
       setSelectedUser(user.username);
@@ -47,19 +54,19 @@ export default function UsersView({
   useEffect(() => {}, [users]);
 
   return (
-    <View style={redirect ? styles.container : styles.smallContainer}>
+    <View style={small ? styles.smallContainer : styles.container}>
       {users.map((user) => (
         <Card key={user.id}>
           <TouchableRipple
             onPress={() => handleSelectUser(user)}
             rippleColor={'rgba(0, 0, 0, .10)'}
-            style={redirect ? styles.userCard : styles.smallUserCard}
+            style={small ? styles.smallUserCard : styles.userCard}
           >
             <Card.Title
-              title={<Text style={redirect ? styles.title : styles.smallTitle}>{user.username}</Text>}
+              title={<Text style={small ? styles.smallTitle : styles.title}>{user.username}</Text>}
               left={() => (
                 <Image
-                  style={redirect ? styles.avatar : styles.smallAvatar}
+                  style={small ? styles.smallAvatar : styles.avatar}
                   source={require('@/assets/images/avatar.png')}
                 />
               )}

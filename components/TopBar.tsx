@@ -35,7 +35,7 @@ export function TopBar(
     <>
       <StatusBar backgroundColor={'#65558F'} />
       <Appbar.Header style={{ backgroundColor: '#65558F' }}>
-        {props.type === 'back' ? (<Appbar.BackAction onPress={() => navigation.goBack()} />)
+        {props.type === 'back' ? (<Appbar.BackAction onPress={() => router.back()} />)
         : (
           <TouchableOpacity onPress={handleProfile} style={{ marginLeft: 10 }}>
             <Avatar.Image size={40} source={require('../assets/images/avatar.png')} />

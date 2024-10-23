@@ -25,6 +25,7 @@ export default function TabLayout({ showSnackbar, targetUser, setTargetUser }: T
       <TopBar type="default" />
       <Tab.Navigator
         initialRouteName="home"
+        backBehavior='history'
         screenOptions={{
           tabBarStyle: {
             backgroundColor: '#65558F',
