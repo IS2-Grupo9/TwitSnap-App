@@ -5,13 +5,15 @@ import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
+import UsersView from '@/components/UsersView';
 
 interface UserProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
   targetUser: string;
+  setTargetUser: (user: string) => void;
 }
 
-export default function UserProfileScreen({ showSnackbar, targetUser }: UserProfileScreenProps) {
+export default function UserProfileScreen({ showSnackbar, targetUser, setTargetUser }: UserProfileScreenProps) {
   const { auth } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
@@ -26,7 +28,12 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
   });
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [following, setFollowing] = useState(false);
+  const [followingUser, setFollowingUser] = useState(false);
+
+  const [isFollowInfoModalVisible, setFollowInfoModalVisible] = useState(false);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [followInfoType, setFollowInfoType] = useState('following');
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -39,6 +46,83 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
+
+  const fetchUsersById = async (userIds: string[]) => {
+    try {
+      // Remove user IDs that are not numbers and duplicates
+      userIds = userIds.filter((id) => !isNaN(Number(id)));
+      userIds = Array.from(new Set(userIds));
+      const response = await fetch(`${apiUrl}/users/users?ids=${userIds}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch users for follow info.', 'error');
+        return {};
+      } else {
+        const users = await response.json();
+        const userDict: { [key: string]: string } = {};
+        users.forEach((user: any) => {
+          userDict[user.id] = user;
+        });
+        return userDict;
+      }
+    } catch (error) {
+      showSnackbar('Failed to fetch users for follow info.', 'error');
+      return {};
+    }
+  };
+
+  const fetchFollowInfo = async () => {
+    try {
+      const followsResponse = await fetch(`${interactionsApiUrl}/interactions/users/${targetUser}/follows`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!followsResponse.ok) {
+        showSnackbar('Failed to fetch follow data.', 'error');
+        return;
+      }
+      const followersResponse = await fetch(`${interactionsApiUrl}/interactions/users/${targetUser}/followers`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!followersResponse.ok) {
+        showSnackbar('Failed to fetch follow data.', 'error');
+        return;
+      }
+      const followsData = await followsResponse.json();
+      const followersData = await followersResponse.json();
+      const followsIds = followsData.data.map((follow: any) => follow.followed_id);
+      const followersIds = followersData.data.map((follow: any) => follow.follower_id);
+
+      console.log('followersIds:', followersIds);
+      console.log('user.id:', auth.user?.id);
+      if (followersIds.includes(auth.user?.id.toString())) {
+        setFollowingUser(true);
+      } else {
+        setFollowingUser(false);
+      }
+
+      const followIds = followsIds.concat(followersIds);
+      
+      const users = await fetchUsersById(followIds);
+
+      setFollowers(followersIds.map((id: string) => users[id]));
+      setFollowing(followsIds.map((id: string) => users[id]));
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+    }
+  }  
 
   const fetchProfile = async () => {
     setLoadingProfile(true);
@@ -57,20 +141,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
         setUser(data);
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
         setParsedInterests(interests);
-        const followingResponse = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/follows`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (followingResponse.status === 200) {
-          const followingData = await followingResponse.json();
-          setFollowing(followingData.data.some((follow: any) => follow.followed_id === targetUser));
-        } else if (followingResponse.status === 404) {
-          setFollowing(false);
-        } else {
-          showSnackbar('Failed to fetch follow data.', 'error');
-        }
+        await fetchFollowInfo();
       } else {
         showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
@@ -95,7 +166,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
       });
 
       if (response.ok) {
-        setFollowing(true);
+        setFollowingUser(true);
         showSnackbar('User followed.', 'success');
       } else {
         showSnackbar('Failed to follow user.', 'error');
@@ -119,7 +190,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
       });
 
       if (response.ok) {
-        setFollowing(false);
+        setFollowingUser(false);
         showSnackbar('User unfollowed.', 'success');
       } else {
         showSnackbar('Failed to unfollow user.', 'error');
@@ -131,7 +202,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [targetUser, followingUser]);
 
   return (
     <>
@@ -143,33 +214,80 @@ export default function UserProfileScreen({ showSnackbar, targetUser }: UserProf
           <View style={styles.avatarContainer}>
             <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
             <Text style={styles.title}>{user.username}</Text>
-            {/* <Text style={styles.subtitle}>{user.email}</Text>
-              <Text style={styles.subtitle}>Location: {user.location}</Text> */}
+            <Text style={styles.subtitle}>{user.email}</Text>
+            <Text style={styles.subtitle}>Location: {user.location}</Text>
             <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
             <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
-            <Text style={styles.sectionTitle}>Interests</Text>
-            <ScrollView horizontal={true} style={styles.chipContainer}>
-              {parsedInterests.map((interest, index) => (
-                <Chip
-                  key={index}
-                  style={styles.chip}
-                  textStyle={{ color: '#65558F' }}
-                  mode="outlined"
-                >
-                  {interest}
-                </Chip>
-              ))}
-            </ScrollView>
+            {user.interests && (
+            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={styles.sectionTitle}>Interests</Text>
+              <ScrollView horizontal={true} style={styles.chipContainer}>
+                {parsedInterests.map((interest, index) => (
+                  <Chip
+                    key={index}
+                    style={styles.chip}
+                    textStyle={{ color: '#65558F' }}
+                    mode="outlined"
+                  >
+                    {interest}
+                  </Chip>
+                ))}
+              </ScrollView>
+            </View>
+            )}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+              <Button 
+                mode='outlined'
+                labelStyle={styles.followInfo}
+                onPress={() => {
+                  setFollowInfoType('following');
+                  setFollowInfoModalVisible(true);
+                }}
+              >
+                Following: {following.length}
+              </Button>
+              <View style={{ width: 10 }} />
+              <Button
+                mode='outlined'
+                labelStyle={styles.followInfo}
+                onPress={() => {
+                  setFollowInfoType('followers');
+                  setFollowInfoModalVisible(true);
+                }}
+              >
+                Followers: {followers.length}
+              </Button>
+            </View>
             <Button
               mode="contained"
               style={styles.followButton}
-              onPress={() => following ? handleUnfollow() : handleFollow()}
+              onPress={() => followingUser ? handleUnfollow() : handleFollow()}
             >
-              {following ? 'Unfollow' : 'Follow'}
+              {followingUser ? 'Unfollow' : 'Follow'}
             </Button>
           </View>
         )}
-      </LinearGradient>     
+      </LinearGradient>
+      <Modal transparent={true} visible={isFollowInfoModalVisible} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{followInfoType === 'following' ? 'Following' : 'Followers'}</Text>
+            <ScrollView style={styles.scrollContainer}>
+              <UsersView
+                users={followInfoType === 'following' ? following : followers}
+                setSelectedUser={setTargetUser}
+                redirect={true}
+                small={true}
+                searchMade={true}
+                closeModal={() => setFollowInfoModalVisible(false)}
+              />
+            </ScrollView>
+            <Button mode="text" onPress={() => setFollowInfoModalVisible(false)} style={styles.cancelButton}>
+              Close
+            </Button>
+          </View>
+        </View>
+      </Modal> 
     </>
   );
 }
@@ -188,4 +306,14 @@ const styles = StyleSheet.create({
     maxHeight: 40,
   },
   chip: { backgroundColor: '#EADDFF', marginRight: 5, color: '#65558F' },
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent: { width: 300, padding: 20, backgroundColor: '#ffffff', borderRadius: 10, alignItems: 'center' },
+  modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  input: { width: '100%', padding: 10, marginVertical: 10, borderColor: '#cccccc', borderWidth: 1, borderRadius: 5 },
+  inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold' },
+  modalButton: { marginTop: 20, paddingHorizontal: 20 },
+  cancelButton: { marginTop: 10 },
+  scrollContainer: { maxHeight: 300, width: '100%' },
+  followInfo: { color: '#65558F', fontWeight: 'bold', fontSize: 16},
+  followInfoModalContent: { height: '40%' },
 });

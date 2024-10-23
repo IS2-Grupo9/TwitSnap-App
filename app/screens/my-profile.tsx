@@ -18,7 +18,6 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [isEditModalVisible, setEditModalVisible] = useState(false);
-  const [isFollowInfoModalVisible, setFollowInfoModalVisible] = useState(false);
   const [user, setUser] = useState<User>({
     id: 0,
     username: '',
@@ -28,8 +27,6 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
     createdAt: '',
     updatedAt: '',
   });
-  const [followers, setFollowers] = useState<User[]>([]);
-  const [following, setFollowing] = useState<User[]>([]);
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [usernameInput, setUsernameInput] = useState(user.username);
   const [locationInput, setLocationInput] = useState(user.location);
@@ -37,6 +34,9 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
+  const [isFollowInfoModalVisible, setFollowInfoModalVisible] = useState(false);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
   const [followInfoType, setFollowInfoType] = useState('following');
   
 
@@ -210,19 +210,23 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
             <Text style={styles.subtitle}>Location: {user.location}</Text>
             <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
             <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
-            <Text style={styles.sectionTitle}>Interests</Text>
-            <ScrollView horizontal={true} style={styles.chipContainer}>
-              {parsedInterests.map((interest, index) => (
-                <Chip
-                  key={index}
-                  style={styles.chip}
-                  textStyle={{ color: '#65558F' }}
-                  mode="outlined"
-                >
-                  {interest}
-                </Chip>
-              ))}
-            </ScrollView>
+            {user.interests && (
+            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={styles.sectionTitle}>Interests</Text>
+              <ScrollView horizontal={true} style={styles.chipContainer}>
+                {parsedInterests.map((interest, index) => (
+                  <Chip
+                    key={index}
+                    style={styles.chip}
+                    textStyle={{ color: '#65558F' }}
+                    mode="outlined"
+                  >
+                    {interest}
+                  </Chip>
+                ))}
+              </ScrollView>
+            </View>
+            )}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
               <Button 
                 mode='outlined'

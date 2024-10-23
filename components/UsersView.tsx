@@ -38,16 +38,11 @@ export default function UsersView({
   };
 
   const goToProfile = (userId: string) => {
-    const state = navigation.getState();
     if (userId === String(auth.user?.id)) {
-      if (state && !state.routes.find(route => route.name === 'screens/my-profile')) {
-        router.push('/screens/my-profile');
-      }
+      router.push('/screens/my-profile');
     } else {
       setSelectedUser(userId);
-      if (state && !state.routes.find(route => route.name === 'screens/user-profile')) {
-        router.push('/screens/user-profile');
-      }
+      router.push('/screens/user-profile');
     }
   };
 
