@@ -76,7 +76,7 @@ const Login = ({ showSnackbar }: LoginProps) => {
       }
     }
     catch (error: any) {
-      showSnackbar(`An unexpected error occurred: ${error.message}. Service may be down?`, 'error');
+      showSnackbar(`An unexpected error occurred. Service may be down?`, 'error');
       console.error('Google Sign In Error:', error.message);
     }
   }

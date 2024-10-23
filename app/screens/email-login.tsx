@@ -58,7 +58,7 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
       login({ token: data.token, user: data.user, google: false });
       setLoading(false);
     } catch (error: any) {
-      showSnackbar(`An unexpected error occurred: ${error.message}. Service may be down?`, 'error');
+      showSnackbar(`An unexpected error occurred. Service may be down?`, 'error');
       console.error('Login Error:', error.message);
       setLoading(false);
     }

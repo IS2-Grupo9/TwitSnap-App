@@ -65,7 +65,7 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
         showSnackbar(`An error occurred: ${errorData.message || 'Please try again.'}`, 'error');
       }
     } catch (error: any) {
-      showSnackbar(`An unexpected error occurred: ${error.message}. Service may be down?`, 'error');
+      showSnackbar(`An unexpected error occurred. Service may be down?`, 'error');
     } finally {
       setLoading(false);
     }
