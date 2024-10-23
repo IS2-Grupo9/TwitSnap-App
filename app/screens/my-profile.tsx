@@ -156,7 +156,7 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
       setFollowers(followersIds.map((id: string) => users[id]));
       setFollowing(followsIds.map((id: string) => users[id]));
     } catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
+      showSnackbar('Failed to fetch follow information.', 'error');
     }
   }   
 

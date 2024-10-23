@@ -105,8 +105,6 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
       const followsIds = followsData.data.map((follow: any) => follow.followed_id);
       const followersIds = followersData.data.map((follow: any) => follow.follower_id);
 
-      console.log('followersIds:', followersIds);
-      console.log('user.id:', auth.user?.id);
       if (followersIds.includes(auth.user?.id.toString())) {
         setFollowingUser(true);
       } else {
@@ -120,7 +118,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
       setFollowers(followersIds.map((id: string) => users[id]));
       setFollowing(followsIds.map((id: string) => users[id]));
     } catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
+      showSnackbar('Failed to fetch follow information.', 'error');
     }
   }  
 
@@ -172,7 +170,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
         showSnackbar('Failed to follow user.', 'error');
       }
     } catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
+      showSnackbar('Failed to follow user.', 'error');
     }
   }
 
@@ -196,7 +194,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
         showSnackbar('Failed to unfollow user.', 'error');
       }
     } catch (error) {
-      showSnackbar('An error occurred. Please try again later.', 'error');
+      showSnackbar('Failed to unfollow user.', 'error');
     }
   }
 
