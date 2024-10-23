@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "TwitSnap-App",
-    "slug": "TwitSnap-App",
+    "name": "twitsnap",
+    "slug": "twitsnap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "twitsnap",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -16,7 +16,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.is2grupo9.TwitSnapApp",
+      "package": "com.is2grupo9.twitsnap",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
