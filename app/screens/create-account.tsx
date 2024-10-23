@@ -7,7 +7,7 @@ import { GoogleSignin, statusCodes, isErrorWithCode, isSuccessResponse } from '@
 import { useAuth } from '@/components/contexts/AuthContext';
 
 GoogleSignin.configure({
-  webClientId: '823250306806-eeq6d8398l8g5uqhahgb7qmbb0itima3.apps.googleusercontent.com'
+  webClientId: '823250306806-qvjrjb4uleclm1s2dd10q95euc8r69hc.apps.googleusercontent.com'
 });
 
 type CreateAccountProps = {
@@ -23,8 +23,11 @@ const CreateAccount = ({ showSnackbar }: CreateAccountProps) => {
     try {
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
-      if (isSuccessResponse(response)) {
-        console.log(response.data);
+      if (isSuccessResponse(response) && response.data.idToken) {
+        sendToBackend(response.data.idToken);
+      }
+      else {
+        showSnackbar('Failed to sign in with Google. Please try again.', 'error');
       }
     } catch (error: any) {
       if (isErrorWithCode(error)) {
