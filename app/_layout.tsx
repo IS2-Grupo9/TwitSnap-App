@@ -68,8 +68,12 @@ const RootLayout: React.FC = () => {
           ) : (
             <>
               <RootStack.Screen name="screens/welcome" component={Welcome} />
-              <RootStack.Screen name="screens/create-account" component={CreateAccount} />
-              <RootStack.Screen name="screens/login" component={Login} />
+              <RootStack.Screen name="screens/create-account">
+                {() => <CreateAccount showSnackbar={showSnackbar} />}
+              </RootStack.Screen>
+              <RootStack.Screen name="screens/login">
+                {() => <Login showSnackbar={showSnackbar} />}
+              </RootStack.Screen>
               <RootStack.Screen name="screens/email-register">
                 {() => <EmailRegister showSnackbar={showSnackbar} />}
               </RootStack.Screen>
