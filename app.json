@@ -33,9 +33,10 @@
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "is2grupo9",
     "extra": {
       "eas": {
-        "projectId": "b287ccb9-e3ec-4b8b-8275-cdca73eafa7c"
+        "projectId": "c7c60701-f946-474d-be3d-d6e0bdfd143c"
       }
     }
   }
