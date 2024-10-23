@@ -1,10 +1,12 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { User } from '../types/models';
 
 interface AuthState {
   token: string | null;
   user: User | null;
+  google: boolean | null;
 }
 
 interface AuthContextType {
@@ -17,7 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [auth, setAuth] = useState<AuthState>({ token: null, user: null });
+  const [auth, setAuth] = useState<AuthState>({ token: null, user: null, google: null });
 
   const login = async (authData: AuthState) => {
     try {
@@ -31,8 +33,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      if (auth.token && auth.google) {
+        const hasPreviousSignIn = GoogleSignin.hasPreviousSignIn();
+        if (hasPreviousSignIn) {
+          await GoogleSignin.signOut();
+        }
+      }
       await AsyncStorage.removeItem('authData');
-      setAuth({ token: null, user: null });
+      setAuth({ token: null, user: null, google: null });
     } catch (error) {
       console.error('Error clearing auth data:', error);
     }

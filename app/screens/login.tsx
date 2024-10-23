@@ -72,7 +72,7 @@ const Login = ({ showSnackbar }: LoginProps) => {
         return;
       }
       if (data.token && data.user) {
-        login({ token: data.token, user: data.user });
+        login({ token: data.token, user: data.user, google: true });
       }
     }
     catch (error: any) {
