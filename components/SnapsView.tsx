@@ -30,6 +30,8 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
 
   // TODO: Do through gateway API with authorization
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
+  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
+  const statisticsApiUrl = process.env.EXPO_PUBLIC_STATISTICS_URL;
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
@@ -39,6 +41,14 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
 
   const [snapToDelete, setSnapToDelete] = useState<number | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const [currentSnapLikes, setCurrentSnapLikes] = useState(0);
+  const [currentSnapShares, setCurrentSnapShares] = useState(0);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [infoModalLoading, setInfoModalLoading] = useState(false);
+
+  const [likedSnaps, setLikedSnaps] = useState<number[]>([]);
+  const [sharedSnaps, setSharedSnaps] = useState<number[]>([]);
 
 
   const formatDate = (created_at: string | undefined, updated_at: string | undefined) => {
@@ -101,15 +111,100 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
     setDeleteModalVisible(true);
   };
 
-  const handleLikeSnap = (snapId: number) => {
-    const updatedSnaps = snaps.map(snap => {
-      if (snap.ID === snapId) {
-        return { ...snap, liked: !snap.liked };
+  const handleLikeSnap = async (snapId: number, liked: boolean) => {
+    const method = liked ? 'DELETE' : 'POST';
+    const action = liked ? 'unlike' : 'like';
+    try {
+      const response = await fetch(`${interactionsApiUrl}/interactions/${action}`, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: auth.user?.id, post_id: snapId }),
+      });
+      if (!response.ok) {
+        showSnackbar(`Failed to ${action} snap.`, 'error');
+        return;
       }
-      return snap;
-    });
-    setSnaps(updatedSnaps);
+      const updatedSnaps = snaps.map(snap => {
+        if (snap.ID === snapId) {
+          snap.liked = !liked;
+        }
+        return snap;
+      });
+      setSnaps(updatedSnaps);
+      if (liked) {
+        setLikedSnaps(likedSnaps.filter(id => id !== snapId));
+      } else {
+        setLikedSnaps([...likedSnaps, snapId]);
+      }
+      showSnackbar(`Snap ${action}d.`, 'success');
+    } catch (error) {
+      showSnackbar(`Failed to ${action} snap.`, 'error');
+    }      
   };
+
+  const handleShareSnap = async (snapId: number, userId: string, shared: boolean) => {
+    const method = shared ? 'DELETE' : 'POST';
+    const action = shared ? 'unshare' : 'share';
+    try {
+      const response = await fetch(`${interactionsApiUrl}/interactions/${action}`, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          original_user_id: userId,
+          user_id: auth.user?.id,
+          post_id: snapId 
+        }),
+      });
+      if (!response.ok) {
+        showSnackbar(`Failed to ${action} snap.`, 'error');
+        return;
+      }
+      const updatedSnaps = snaps.map(snap => {
+        if (snap.ID === snapId) {
+          snap.shared = !shared;
+        }
+        return snap;
+      });
+      setSnaps(updatedSnaps);
+      if (shared) {
+        setSharedSnaps(sharedSnaps.filter(id => id !== snapId));
+      } else {
+        setSharedSnaps([...sharedSnaps, snapId]);
+      }
+      showSnackbar(`Snap ${action}d.`, 'success');
+    } catch (error) {
+      showSnackbar(`Failed to ${action} snap.`, 'error');
+    }      
+  };
+
+  const handleInfoModal = async (snapId: number) => {
+    setInfoModalVisible(true);
+    setInfoModalLoading(true);
+    try {
+      const response = await fetch(`${statisticsApiUrl}/statistics/posts/${snapId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch snap information.', 'error');
+        return;
+      }
+      const likes = await response.json();
+      setCurrentSnapLikes(likes.data.like_counter);
+      setCurrentSnapShares(likes.data.share_counter);
+      setInfoModalLoading(false);
+    } catch (error) {
+      setInfoModalVisible(false);
+      setInfoModalLoading(false);
+      showSnackbar('Failed to fetch snap information.', 'error');
+    }
+  }
 
   const goToProfile = (userId: string) => {
     const state = navigation.getState();
@@ -143,7 +238,6 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
       } else {
         const error = await response.json();
         showSnackbar('Error searching snaps.', 'error');
-        console.log('Error searching snaps:', error);
         return [];
       }
     }
@@ -154,6 +248,49 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
     }
   }
 
+  const fetchLikedSnaps = async () => {
+    try {
+      const response = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/likes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch liked snaps.', 'error');
+        return [];
+      }
+      const likes = await response.json();
+      const likedSnaps = likes.data.map((like: any) => like.post_id);
+      setLikedSnaps(likedSnaps);
+      return likedSnaps;
+    } catch (error) {
+      showSnackbar('Failed to fetch liked snaps.', 'error');
+      return [];
+    }
+  }
+
+  const fetchSharedSnaps = async () => {
+    try {
+      const response = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/shares`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch shared snaps.', 'error');
+        return [];
+      }
+      const shares = await response.json();
+      const sharedSnaps = shares.data.map((share: any) => share.post_id);
+      setSharedSnaps(sharedSnaps);
+      return sharedSnaps;
+    } catch (error) {
+      showSnackbar('Failed to fetch shared snaps.', 'error');
+      return [];
+    }
+  }
   
   const fetchSnaps = async () => {
     try {
@@ -168,9 +305,12 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         return [];
       }
       const snaps = await response.json();
+      const lsnaps = await fetchLikedSnaps();
+      const ssnaps = await fetchSharedSnaps();
       const completedSnaps = snaps.data?.map((snap: any) => ({
         ...snap,
-        liked: false,
+        liked: Array.isArray(lsnaps) && lsnaps.includes(snap.ID),
+        shared: Array.isArray(ssnaps) && ssnaps.includes(snap.ID),
         editable: snap.user === String(auth.user?.id),
         username: 'Unknown',
       }));
@@ -179,6 +319,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
       });
       return completedSnaps;
     } catch (error : any) {
+      console.error('Error fetching snaps:', error.message);
       showSnackbar('Failed to fetch snaps.', 'error');
       return [];
     }
@@ -294,20 +435,27 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
                 <Card.Actions style={styles.bottomActions}>
                   <Ionicons
                     name={snap.liked ? 'heart' : 'heart-outline'}
-                    size={24}
+                    size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => handleLikeSnap(snap.ID)}
+                    onPress={() => handleLikeSnap(snap.ID, snap.liked)}
                   />
-                  <Text style={styles.interactionCount}>3</Text>
+                  <View style={{width: 5}} />
                   <Ionicons
-                    name="arrow-redo-outline"
-                    size={24}
+                    name={snap.shared ? 'arrow-redo' : 'arrow-redo-outline'}
+                    size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => console.log('SnapShare')}
+                    onPress={() => handleShareSnap(snap.ID, snap.user, snap.shared)}
                   />
-                  <Text style={styles.interactionCount}>5</Text>
+                  <View style={{width: 5}} />
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={30}
+                    color="#65558F"
+                    style={styles.iconButton}
+                    onPress={() => handleInfoModal(snap.ID)}
+                  />
                 </Card.Actions>
               </Card>
             ))}
@@ -347,6 +495,24 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         setSnapToDelete={setSnapToDelete}
         loadSnaps={loadSnaps}
       />
+      <Modal transparent={true} visible={infoModalVisible} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {infoModalLoading ? (
+              <ActivityIndicator size="large" color="#65558F" />
+            ) : (
+              <View style={{ width: '100%' }}>
+                <Text style={styles.modalTitle}>Snap Information</Text>
+                <Text style={styles.modalText}>Likes: {currentSnapLikes}</Text>
+                <Text style={styles.modalText}>Shares: {currentSnapShares}</Text>
+              </View>
+            )}
+            <Button mode="text" onPress={() => setInfoModalVisible(false)} style={styles.cancelButton}>
+              Close
+            </Button>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -422,5 +588,32 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     justifyContent: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: 'black',
+  },
+  modalContent: {
+    width: 300,
+    padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    color: 'black',
+    marginBottom: 10,
+  },
+  cancelButton: {
+    marginTop: 10,
   },
 });
