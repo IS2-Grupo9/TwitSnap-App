@@ -48,7 +48,6 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
       } else {
         const error = await response.json();
         showSnackbar('Error searching users.', 'error');
-        console.log('Error searching users:', error);
         setUsers([]);
         setSearchMade(true);
       }
