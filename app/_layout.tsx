@@ -17,6 +17,9 @@ import EmailLogin from './screens/email-login';
 import MyProfileScreen from './screens/my-profile';
 import UserProfileScreen from './screens/user-profile';
 
+import { analytics, chatDB, messaging } from '@/config/firebaseConfig';
+import * as Notifications from 'expo-notifications';
+
 const RootStack = createNativeStackNavigator();
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -33,6 +36,25 @@ const RootLayout: React.FC = () => {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
+  async function registerForPushNotificationsAsync() {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status === 'granted') {
+      console.log('Notification permissions granted.');
+      await getFcmToken();
+    } else {
+      console.log('Notifications permissions not granted.');
+    }
+  }
+  
+  async function getFcmToken() {
+    const fcmToken = await messaging.getToken();
+    if (fcmToken) {
+      console.log('Your Firebase Cloud Messaging token is:', fcmToken);
+    } else {
+      console.log('Failed to get Firebase Cloud Messaging token.');
+    }
+  }
+
   const showSnackbar = (message: string, type: string) => {
     setSnackbarType(type);
     setSnackbarMessage(message);
@@ -42,8 +64,28 @@ const RootLayout: React.FC = () => {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      registerForPushNotificationsAsync(); // Call once on load
     }
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    if (auth.token) {
+      const unsubscribe = messaging.onMessage(async (message: any) => {
+        console.log('onMessage', message);
+        const { title, body } = message.notification;
+    
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: title || 'New Notification',
+            body: body || 'You have a new notification.',
+          },
+          trigger: null,
+        });
+      });
+
+      return unsubscribe;
+    }
+  }, [auth.token]);
 
   if (!fontsLoaded) {
     return null;

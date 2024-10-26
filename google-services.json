@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "216459666015",
+    "project_id": "twitsnap-aff6b",
+    "storage_bucket": "twitsnap-aff6b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:216459666015:android:16fb910ca6a8fb3cfdb1ea",
+        "android_client_info": {
+          "package_name": "com.is2grupo9.twitsnap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdDSbO11j_t4U5VLaBOvRqXoMifdyeXPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
