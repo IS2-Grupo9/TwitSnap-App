@@ -17,7 +17,7 @@ import EmailLogin from './screens/email-login';
 import MyProfileScreen from './screens/my-profile';
 import UserProfileScreen from './screens/user-profile';
 
-import { analytics, chatDB, messaging } from '@/config/firebaseConfig';
+import { app, chatDB, messagingInstance as messaging } from '@/config/firebaseConfig';
 import * as Notifications from 'expo-notifications';
 
 const RootStack = createNativeStackNavigator();

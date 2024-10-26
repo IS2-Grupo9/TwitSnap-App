@@ -1,7 +1,6 @@
-import firebase from 'firebase/app';
-import 'firebase/analytics';
-import 'firebase/firestore';
-import 'firebase/messaging';
+import { FirebaseApp, initializeApp } from '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBfXuxIRoHaibsWtRFHJfhsGTc39wet9pg",
@@ -14,9 +13,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const chatDB = getFirestore(app);
-const messaging = getMessaging(app);
 
-export { analytics, chatDB, messaging };
-  
+const chatDB = firestore();
+const messagingInstance = messaging();
+
+export { app, chatDB, messagingInstance };
