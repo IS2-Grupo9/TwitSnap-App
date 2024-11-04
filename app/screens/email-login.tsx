@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LogoHeader } from '@/components/LogoHeader';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 type EmailLoginProps = {
   showSnackbar: (message: string, type: string) => void;
@@ -50,7 +51,13 @@ const EmailLogin = ({ showSnackbar }: EmailLoginProps) => {
 
       const data = await response.json();
       if (!response.ok) {
-        showSnackbar(data.message || 'Invalid email or password. Please try again.', 'error');
+        if (response.status === 400) {
+          showSnackbar("Invalid email or password.", 'error');
+        } else if (response.status === 403) {
+          showSnackbar("Account has been blocked by an admin.", 'error');
+        } else {
+          showSnackbar(`An unexpected error occurred. Service may be down?`, 'error');
+        }
         setLoading(false);
         return;
       }

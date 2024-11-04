@@ -68,7 +68,17 @@ const Login = ({ showSnackbar }: LoginProps) => {
 
       const data = await response.json();
       if (!response.ok) {
-        showSnackbar(data.message || 'Failed to sign in with Google. Please try again.', 'error');
+        if (response.status === 400) {
+          showSnackbar("Invalid email or password.", 'error');
+        } else if (response.status === 403) {
+          showSnackbar("Account has been blocked by an admin.", 'error');
+        } else {
+          showSnackbar(`An unexpected error occurred. Service may be down?`, 'error');
+        }
+        const hasPreviousSignIn = GoogleSignin.hasPreviousSignIn();
+        if (hasPreviousSignIn) {
+          await GoogleSignin.signOut();
+        }
         return;
       }
       if (data.token && data.user) {
