@@ -6,18 +6,45 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GoogleSignin, statusCodes, isErrorWithCode, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import { useAuth } from '@/components/contexts/AuthContext';
 
+import { fireDB } from '@/config/firebaseConfig';
+import firestore from '@react-native-firebase/firestore';
+
 GoogleSignin.configure({
   webClientId: '823250306806-qvjrjb4uleclm1s2dd10q95euc8r69hc.apps.googleusercontent.com'
 });
 
 type CreateAccountProps = {
   showSnackbar: (message: string, type: string) => void;
+  fcmToken: string | null;
 };
 
-const CreateAccount = ({ showSnackbar }: CreateAccountProps) => {
+const CreateAccount = ({ showSnackbar, fcmToken }: CreateAccountProps) => {
   const { login } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const router = useRouter();
+
+  async function registerFcmToken(username: string) {    
+    if (fcmToken && username) {
+      console.log('Your Firebase Cloud Messaging token is:', fcmToken);
+  
+      try {
+        const userDocRef = fireDB.collection('users').doc(username);
+  
+        await userDocRef.set(
+          {
+            fcmTokens: firestore.FieldValue.arrayUnion(fcmToken),
+          },
+          { merge: true }
+        );
+  
+        console.log('FCM token added to Firestore.');
+      } catch (error) {
+        console.error('Error adding FCM token to Firestore:', error);
+      }
+    } else {
+      console.log('Failed to get Firebase Cloud Messaging token or username not found.');
+    }
+  }
 
   const handleGoogleSignIn = async () => {
     try {
@@ -73,6 +100,7 @@ const CreateAccount = ({ showSnackbar }: CreateAccountProps) => {
       }
       if (data.token && data.user) {
         login({ token: data.token, user: data.user, google: true });
+        await registerFcmToken(data.user.username);
       }
     }
     catch (error: any) {

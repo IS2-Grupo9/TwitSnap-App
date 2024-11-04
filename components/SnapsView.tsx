@@ -127,6 +127,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         body: JSON.stringify({ user_id: auth.user?.id, post_id: snapId }),
       });
       if (!response.ok) {
+        console.log(response.status);
         showSnackbar(`Failed to ${action} snap.`, 'error');
         return;
       }
@@ -261,6 +262,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         },
       });
       if (!response.ok) {
+        console.log(response.status);
         showSnackbar('Failed to fetch liked snaps.', 'error');
         return [];
       }

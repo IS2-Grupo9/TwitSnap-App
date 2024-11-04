@@ -17,7 +17,7 @@ import EmailLogin from './screens/email-login';
 import MyProfileScreen from './screens/my-profile';
 import UserProfileScreen from './screens/user-profile';
 
-import { app, chatDB, messagingInstance as messaging } from '@/config/firebaseConfig';
+import { messagingInstance as messaging } from '@/config/firebaseConfig';
 import * as Notifications from 'expo-notifications';
 
 const RootStack = createNativeStackNavigator();
@@ -32,6 +32,7 @@ const RootLayout: React.FC = () => {
   const [snackbarType, setSnackbarType] = useState('success');
   const { auth } = useAuth();
   const [targetUser, setTargetUser] = useState('');
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -40,18 +41,9 @@ const RootLayout: React.FC = () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status === 'granted') {
       console.log('Notification permissions granted.');
-      await getFcmToken();
+      setFcmToken(await messaging.getToken());
     } else {
       console.log('Notifications permissions not granted.');
-    }
-  }
-  
-  async function getFcmToken() {
-    const fcmToken = await messaging.getToken();
-    if (fcmToken) {
-      console.log('Your Firebase Cloud Messaging token is:', fcmToken);
-    } else {
-      console.log('Failed to get Firebase Cloud Messaging token.');
     }
   }
 
@@ -111,16 +103,16 @@ const RootLayout: React.FC = () => {
             <>
               <RootStack.Screen name="screens/welcome" component={Welcome} />
               <RootStack.Screen name="screens/create-account">
-                {() => <CreateAccount showSnackbar={showSnackbar} />}
+                {() => <CreateAccount showSnackbar={showSnackbar} fcmToken={fcmToken} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/login">
-                {() => <Login showSnackbar={showSnackbar} />}
+                {() => <Login showSnackbar={showSnackbar} fcmToken={fcmToken} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/email-register">
                 {() => <EmailRegister showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/email-login">
-                {() => <EmailLogin showSnackbar={showSnackbar} />}
+                {() => <EmailLogin showSnackbar={showSnackbar} fcmToken={fcmToken} />}
               </RootStack.Screen>
             </>
           )}

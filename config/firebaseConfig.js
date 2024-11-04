@@ -14,7 +14,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const chatDB = firestore();
+const fireDB = firestore();
 const messagingInstance = messaging();
 
-export { app, chatDB, messagingInstance };
+export { app, fireDB, messagingInstance };
