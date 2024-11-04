@@ -124,7 +124,7 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ user_id: auth.user?.id, post_id: snapId }),
+        body: JSON.stringify({ user_id: auth.user?.id.toString(), post_id: snapId.toString() }),
       });
       if (!response.ok) {
         console.log(response.status);
@@ -159,9 +159,9 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          original_user_id: userId,
-          user_id: auth.user?.id,
-          post_id: snapId 
+          original_user_id: userId.toString(),
+          user_id: auth.user?.id.toString(),
+          post_id: snapId.toString(),
         }),
       });
       if (!response.ok) {

@@ -166,8 +166,8 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          follower_id: auth.user?.id,
-          followed_id: targetUser,
+          follower_id: auth.user?.id.toString(),
+          followed_id: targetUser.toString(),
         }),
       });
 
@@ -190,8 +190,8 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          follower_id: auth.user?.id,
-          followed_id: targetUser,
+          follower_id: auth.user?.id.toString(),
+          followed_id: targetUser.toString(),
         }),
       });
 
