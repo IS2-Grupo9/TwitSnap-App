@@ -22,3 +22,19 @@ export interface User {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface Message {
+    id: string;
+    sender: string;
+    text: string;
+    timestamp: string;
+}
+
+export interface Chat {
+    id: string;
+    participants: string[];
+    createdAt: string;
+    updatedAt: string;
+    lastMessage?: Message;
+    messages: Message[];
+}

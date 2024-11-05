@@ -7,7 +7,7 @@ import HomeScreen from './home';
 import ExploreScreen from './explore';
 import { TopBar } from '@/components/TopBar';
 import { StyleSheet } from 'react-native';
-import ChatScreen from './chat';
+import ChatListScreen from './chat';
 
 const Tab = createBottomTabNavigator();
 
@@ -64,8 +64,9 @@ export default function TabLayout({ showSnackbar, targetUser, setTargetUser }: T
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} color={color} size={30} />
           ),
-        }}
-        component={ChatScreen} />
+        }}>
+          {() => <ChatListScreen showSnackbar={showSnackbar} />}
+        </Tab.Screen>
       </Tab.Navigator>
     </>
   );
