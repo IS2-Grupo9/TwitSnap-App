@@ -27,7 +27,7 @@ export interface Message {
     id: string;
     sender: string;
     text: string;
-    timestamp: string;
+    createdAt: string;
 }
 
 export interface Chat {
@@ -36,5 +36,4 @@ export interface Chat {
     createdAt: string;
     updatedAt: string;
     lastMessage?: Message;
-    messages: Message[];
 }

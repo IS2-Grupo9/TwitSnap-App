@@ -5,9 +5,9 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './home';
 import ExploreScreen from './explore';
+import ChatListScreen from './chat-list';
 import { TopBar } from '@/components/TopBar';
 import { StyleSheet } from 'react-native';
-import ChatListScreen from './chat';
 
 const Tab = createBottomTabNavigator();
 

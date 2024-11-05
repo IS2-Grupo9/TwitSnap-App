@@ -19,6 +19,7 @@ import UserProfileScreen from './screens/user-profile';
 
 import { messagingInstance as messaging } from '@/config/firebaseConfig';
 import * as Notifications from 'expo-notifications';
+import ChatScreen from './screens/chat';
 
 const RootStack = createNativeStackNavigator();
 
@@ -90,13 +91,19 @@ const RootLayout: React.FC = () => {
           {auth.token ? (
             <>
               <RootStack.Screen name="(tabs)">
-                {() => <TabLayout showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+                {() => <TabLayout showSnackbar={showSnackbar}
+                  targetUser={targetUser}
+                  setTargetUser={setTargetUser}          
+                  />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/my-profile">
                 {() => <MyProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/user-profile">
                 {() => <UserProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+              </RootStack.Screen>
+              <RootStack.Screen name="screens/chat">
+                {() => <ChatScreen />}
               </RootStack.Screen>
             </>
           ) : (

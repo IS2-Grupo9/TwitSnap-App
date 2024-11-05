@@ -3,10 +3,10 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, ScrollView, 
 import firestore from '@react-native-firebase/firestore';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Chat, Message, User } from '@/components/types/models';
-import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Button } from 'react-native-paper';
 import UsersView from '@/components/UsersView';
+import { router } from 'expo-router';
 
 interface ChatListScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -19,6 +19,7 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
   const [showCreateChatModal, setShowCreateChatModal] = useState(false);
   const [createChatModalLoading, setCreateChatModalLoading] = useState(false);
   const [newChatUsername, setNewChatUsername] = useState('');
+  const [newMessage, setNewMessage] = useState('');
 
   const [suggestedUsersVisible, setSuggestedUsersVisible] = useState(false);
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
@@ -95,10 +96,107 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
     setSuggestedUsersVisible(false);
   }
 
-  const handleCreateChat = async () => {
-    console.log('Creating chat with:', newChatUsername);
-    setShowCreateChatModal(false);
+  const getUserId = async (username: string) => {
+    try {
+      const response = await fetch(`${apiUrl}/users/search?username=${username}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${auth.token}`,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',          
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        return data[0].id;
+      } else {
+        showSnackbar('Error getting user ID.', 'error');
+        return '';
+      }
+    }
+    catch (error: any) {
+      showSnackbar('Error getting user ID.', 'error');
+      console.error('Error getting user ID:', error.message);
+      return
+    }
   }
+
+  const handleCreateChat = async () => {
+    try {
+      if (!newChatUsername.trim()) {
+        showSnackbar('Please enter a username.', 'error');
+        return;
+      }
+      if (!newMessage.trim()) {
+        showSnackbar('Please enter a message.', 'error');
+        return;
+      }
+      if (newChatUsername === auth?.user?.username) {
+        showSnackbar('You cannot create a chat with yourself.', 'error');
+        return;
+      }
+  
+      const participant1 = auth?.user?.id.toString();
+      const participant2 = (await getUserId(newChatUsername)).toString();
+      if (!participant2) {
+        showSnackbar('User not found.', 'error');
+        return;
+      }
+      const sortedParticipants = [participant1, participant2].sort();
+      const chatId = `${sortedParticipants[0]}_${sortedParticipants[1]}`;
+  
+      const chatRef = firestore().collection('chats').doc(chatId);
+      const chatSnapshot = await chatRef.get();
+  
+      if (chatSnapshot.exists) {
+        await chatRef.update({
+          updatedAt: new Date(),
+          lastMessage: {
+            sender: auth?.user?.username,
+            text: newMessage,
+            createdAt: new Date(),
+          },
+        });
+      } else {
+        setCreateChatModalLoading(true);
+        await chatRef.set({
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          participants: [auth?.user?.username, newChatUsername],
+          lastMessage: {
+            sender: auth?.user?.username,
+            text: newMessage,
+            createdAt: new Date(),
+          },
+        });
+      }
+  
+      // Add the message to the `messages` subcollection
+      await chatRef.collection('messages').add({
+        sender: auth?.user?.username,
+        text: newMessage,
+        createdAt: new Date(),
+      });
+  
+      router.setParams({ chatId: chatId });
+    } catch (error: any) {
+      showSnackbar('Error creating chat:', 'error');
+      console.error('Error creating chat:', error.message);
+    } finally {
+      setCreateChatModalLoading(false);
+      setNewChatUsername('');
+      setNewMessage('');
+      setShowCreateChatModal(false);
+    }
+  };
+ 
+
+  const formatFirestoreTimestamp = (timestamp : any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate();
+    return date.toLocaleString();
+  };
 
   useEffect(() => {
     const unsubscribe = firestore()
@@ -108,32 +206,36 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
         const chatsData : Chat[] = snapshot.docs.map(doc => ({
           id: doc.id,
           participants: doc.data().participants,
-          createdAt: doc.data().createdAt.toDate(),
-          updatedAt: doc.data().updatedAt.toDate(),
-          messages: doc.data().messages,          
-          lastMessage: doc.data().messages[doc.data().messages.length - 1] || null,
+          createdAt: doc.data().createdAt,
+          updatedAt: doc.data().updatedAt,
+          lastMessage: doc.data().lastMessage,
         }));
         setChats(chatsData);
       });
 
     return unsubscribe;
-  }, [auth?.user?.username]);
+  }, []);
 
   // Navigate to chat screen
   const handleChatPress = (chat : Chat) => {
-    const otherUsername = chat.participants.find(username => username !== auth?.user?.username);
+    router.setParams({ chatId : chat.id });
+    router.push({
+      pathname: '/screens/chat',
+      params: { chatId : chat.id },
+    });
   };
 
   return (
     <View style={styles.container}>
-      {chats.length === 0 && <Text>No chats found.</Text>}
+      {chats.length === 0 && <Text style={{ textAlign: 'center', marginTop: 20 }}>No chats found.</Text>}
       <FlatList
         data={chats}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.chatItem} onPress={() => handleChatPress(item)}>
-            <Text style={styles.chatTitle}>{item.lastMessage?.sender}: {item.lastMessage?.text}</Text>
-            <Text style={styles.chatSubtitle}>Last message at {item.updatedAt?.toLocaleString()}</Text>
+            <Text style={styles.chatTitle}>{item.participants.filter(p => p !== auth?.user?.username).join(', ')}</Text>
+            <Text style={styles.chatMessage}>{item.lastMessage?.sender}: {item.lastMessage?.text}</Text>
+            <Text style={styles.chatSubtitle}>Last message at {formatFirestoreTimestamp(item.lastMessage?.createdAt)}</Text>
           </TouchableOpacity>
         )}
       />
@@ -150,6 +252,13 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
               value={newChatUsername}
               onChangeText={handleTextChange}
             />
+            <TextInput
+              style={styles.textMessageInput}
+              placeholder="Type your message"
+              value={newMessage}
+              onChangeText={setNewMessage}
+              multiline
+            />
             {createChatModalLoading ? (
               <ActivityIndicator size="large" color="#65558F" />
             ) : (
@@ -160,7 +269,7 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
               textColor="#FFFFFF"
               style={styles.modalButton}
             >
-              Create Chat
+              Create
             </Button>
             )}
             <Button mode="text" onPress={() => setShowCreateChatModal(false)} style={styles.cancelButton}>
@@ -193,14 +302,21 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f0f0f0' },
+  container: { flex: 1, padding: 16, backgroundColor: 'white' },
   chatItem: { 
     padding: 16, 
     borderBottomWidth: 1, 
     borderBottomColor: '#ddd' 
   },
   chatTitle: { 
-    fontWeight: 'bold', 
+    fontWeight: 'bold',
+    fontSize: 20,
+    marginBottom: 10,
+    color: '#000'
+  },
+  chatMessage: { 
+    fontWeight: 'bold',
+    marginBottom: 10,
     color: '#65558F' 
   },
   chatSubtitle: { 
@@ -251,6 +367,16 @@ const styles = StyleSheet.create({
   },
   textInput: {
     width: '100%',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  textMessageInput: {
+    width: '100%',
+    height: 100,
+    textAlignVertical: 'top',
     borderColor: '#ddd',
     borderWidth: 1,
     borderRadius: 5,
