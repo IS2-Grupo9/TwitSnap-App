@@ -241,8 +241,6 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
         });
         return sortedSnaps;
       } else {
-        const error = await response.json();
-        showSnackbar('Error searching snaps.', 'error');
         return [];
       }
     }
