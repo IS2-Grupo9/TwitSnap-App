@@ -107,6 +107,7 @@ export default function ChatScreen() {
           placeholder="Type your message"
           value={newMessage}
           onChangeText={setNewMessage}
+          onSubmitEditing={handleSend}
         />
         <Button title="Send" onPress={handleSend} />
       </View>
