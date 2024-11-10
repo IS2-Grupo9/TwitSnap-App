@@ -48,6 +48,10 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   const [likedSnaps, setLikedSnaps] = useState<number[]>([]);
   const [sharedSnaps, setSharedSnaps] = useState<number[]>([]);
 
+  const [limit] = useState(10);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true); 
+
 
   const formatDate = (created_at: string | undefined, updated_at: string | undefined) => {
     const dateString = updated_at || created_at;
@@ -290,10 +294,11 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
     }
   }
   
-  const fetchSnaps = async () => {
+  const fetchSnaps = async (currentOffset: number = 0) => {
     try {
-      const extraFields = auth.user?.interests ? `&interests=${auth.user.interests}` : '';
-      const response = await fetch(`${postsApiUrl}/feed?user_id=${auth.user?.id}${extraFields}`, {
+      const interestWords = auth.user?.interests?.split(',').map((word) => word.trim()).join(',');
+      const extraFields = auth.user?.interests ? `&interest_words=${interestWords}` : '';
+      const response = await fetch(`${postsApiUrl}/feed?user_id=${auth.user?.id}&limit=${limit}&offset=${currentOffset}${extraFields}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -304,6 +309,9 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         return [];
       }
       const snaps = await response.json();
+
+      if (snaps.data.length < limit) setHasMore(false);
+
       const lsnaps = await fetchLikedSnaps();
       const ssnaps = await fetchSharedSnaps();
       if (!Array.isArray(snaps.data)) {
@@ -332,18 +340,9 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   const loadSnaps = async () => {
     setLoading(true);
     try {
-      let fetchedSnaps: ExtendedSnap[] = [];
-      if (feed) {
-        fetchedSnaps = await fetchSnaps();
-      } else {
-        if (searchQuery.trim() === '') {
-          showSnackbar('Please enter a search query.', 'error');
-          setLoading(false);
-          return;
-        }
-        fetchedSnaps = await handleSearch();
-        setSearchMade(true);
-      }
+      setOffset(0);
+      setHasMore(true);
+      const fetchedSnaps = feed ? await fetchSnaps(0) : await handleSearch();
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
         setLoading(false);
@@ -367,7 +366,21 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       showSnackbar('Failed to fetch snaps.', 'error');
       setLoading(false);
     }
-  }
+    
+  };
+
+  const loadMoreSnaps = async () => {
+    if (!hasMore || loading) return;
+    setLoading(true);
+    const newOffset = offset + limit;
+    const moreSnaps = await fetchSnaps(newOffset);
+  
+    if (moreSnaps) {
+      setSnaps([...snaps, ...moreSnaps]);
+      setOffset(newOffset);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (feed) {
@@ -429,7 +442,9 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                       <Text style={styles.titleStyle}>{snap.username || 'Unkwown'}</Text>
                     </TouchableOpacity>
                   }
-                  subtitle={formatDate(snap.created_at, snap.updated_at)}
+                  subtitle={
+
+                    formatDate(snap.created_at, snap.updated_at)}
                   titleStyle={styles.titleStyle}
                   subtitleStyle={styles.subtitleStyle}
                   left={() => (
@@ -485,6 +500,11 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                 {snaps.length === 0 && searchMade ? 'No snaps found' : ''}
               </Text>
             </View>
+            {hasMore && (
+              <Button onPress={loadMoreSnaps} loading={loading} mode="outlined" style={styles.loadMoreButton}>
+                <Text style={{ color: '#65558F' }}>Load More</Text>
+              </Button>
+            )}
           </ScrollView>
         }
       </View>
@@ -641,5 +661,12 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 10,
+  },
+  loadMoreButton: {
+    backgroundColor: 'white',
+    borderColor: '#65558F',
+    marginVertical: 20,
+    width: '40%',
+    alignSelf: 'center',
   },
 });

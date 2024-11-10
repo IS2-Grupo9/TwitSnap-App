@@ -39,7 +39,7 @@ export default function EditSnapModal({
           return;
         }
 
-        const response = await fetch(`${postsApiUrl}/snaps/${editedSnap?.ID}`, {
+        const response = await fetch(`${postsApiUrl}/snaps/${editedSnap?.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
