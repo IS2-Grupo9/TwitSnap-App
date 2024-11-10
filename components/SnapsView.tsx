@@ -237,7 +237,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       });
       if (response.ok) {
         const data = await response.json();
-        const sortedSnaps = data?.data.sort((a: ExtendedSnap, b: ExtendedSnap) => {
+        const sortedSnaps = data?.data?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
         return sortedSnaps;
@@ -299,7 +299,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   
   const fetchSnaps = async () => {
     try {
-      const response = await fetch(`${postsApiUrl}/snaps`, {
+      const response = await fetch(`${postsApiUrl}/feed?user_id=${auth.user?.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -312,6 +312,9 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       const snaps = await response.json();
       const lsnaps = await fetchLikedSnaps();
       const ssnaps = await fetchSharedSnaps();
+      if (!Array.isArray(snaps.data)) {
+        return [];
+      }
       const completedSnaps = snaps.data?.map((snap: any) => ({
         ...snap,
         liked: Array.isArray(lsnaps) && lsnaps.includes(snap.ID),
@@ -319,7 +322,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         editable: snap.user === String(auth.user?.id),
         username: 'Unknown',
       }));
-      completedSnaps.sort((a: ExtendedSnap, b: ExtendedSnap) => {
+      completedSnaps?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       return completedSnaps;

@@ -41,7 +41,6 @@ export default function UsersView({
     if (user?.id.toString() === auth.user?.id.toString()) {
       router.push('/screens/my-profile');
     } else {
-      console.log('user', user.id);
       router.push({
         pathname: '/screens/user-profile',
         params: { userId: user.id },

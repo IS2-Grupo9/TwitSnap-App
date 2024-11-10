@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, Switch } from 'react-native-paper';
 import { TopBar } from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
+import { Ionicons } from '@expo/vector-icons';
 
 interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -24,7 +25,9 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     interests: '',
     createdAt: '',
     updatedAt: '',
+    private: false,
   });
+  const [isPrivate, setIsPrivate] = useState(user.private); 
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [usernameInput, setUsernameInput] = useState(user.username);
   const [locationInput, setLocationInput] = useState(user.location);
@@ -68,6 +71,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
           username: usernameInput,
           location: locationInput,
           interests: interestInput,
+          _private: isPrivate,
         }),
       });
 
@@ -186,6 +190,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
         updateUserData(data);
         setParsedInterests(interests);
         setInterestInput(data.interests ? interests.join(', ') : '');
+        setIsPrivate(data.private);        
         await fetchFollowInfo();
       } else if (response.status === 401) {
         showSnackbar('Session expired. Please log in again.', 'error');
@@ -213,7 +218,12 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
         ) : (
           <View style={styles.avatarContainer}>
             <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
-            <Text style={styles.title}>{user.username}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.title}>{user.username}</Text>
+              {user.private && (
+                <Ionicons name="lock-closed" size={20} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
+              )}
+            </View>
             <Text style={styles.subtitle}>{user.email}</Text>
             <Text style={styles.subtitle}>Location: {user.location}</Text>
             <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
@@ -298,6 +308,14 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
               onChangeText={setInterestInput}
               placeholderTextColor="#888"
             />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+              <Text style={styles.inputLabel}>Private</Text>
+              <Switch
+                value={isPrivate}
+                onValueChange={(value) => setIsPrivate(value)}
+                trackColor={{ true: '#65558F', false: '#ccc' }}
+              />
+            </View>
             {loadingEdit ? (
               <ActivityIndicator size="large" color="#65558F" />
             ) : (
@@ -354,7 +372,7 @@ const styles = StyleSheet.create({
   modalContent: { width: 300, padding: 20, backgroundColor: '#ffffff', borderRadius: 10, alignItems: 'center' },
   modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   input: { width: '100%', padding: 10, marginVertical: 10, borderColor: '#cccccc', borderWidth: 1, borderRadius: 5 },
-  inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold' },
+  inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold'},
   modalButton: { marginTop: 20, paddingHorizontal: 20 },
   cancelButton: { marginTop: 10 },
   scrollContainer: { maxHeight: 300, width: '100%' },

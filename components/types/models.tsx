@@ -21,6 +21,7 @@ export interface User {
     interests: string;
     createdAt: string;
     updatedAt: string;
+    private: boolean;
 }
 
 export interface Message {

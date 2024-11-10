@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
 import { useGlobalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface UserProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -25,10 +26,13 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
     interests: '',
     createdAt: '',
     updatedAt: '',
+    private: false,
   });
+  const [isPrivate, setIsPrivate] = useState(user.private); 
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [followingUser, setFollowingUser] = useState(false);
+  const [isfollowingMe, setIsFollowingMe] = useState(false);
 
   const [isFollowInfoModalVisible, setFollowInfoModalVisible] = useState(false);
   const [followers, setFollowers] = useState<User[]>([]);
@@ -115,6 +119,12 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
         setFollowingUser(false);
       }
 
+      if (followsIds.includes(auth.user?.id.toString())) {
+        setIsFollowingMe(true);
+      } else {
+        setIsFollowingMe(false);
+      }
+
       const followIds = followsIds.concat(followersIds);
       
       if (followIds.length > 0) {
@@ -128,7 +138,6 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
   }  
 
   const fetchProfile = async () => {
-    console.log('User ID:', userId);
     setLoadingProfile(true);
     try {
       const response = await fetch(`${apiUrl}/users/user?id=${userId}`, {
@@ -142,6 +151,7 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
       });
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setUser(data);
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
         setParsedInterests(interests);
@@ -213,76 +223,98 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
 
   return (
     <>
-      <TopBar type='back' />
-      <LinearGradient colors={['#EADDFF', '#FFFFFF']} style={styles.container}>
+      <TopBar type="back" />
+      <LinearGradient colors={["#EADDFF", "#FFFFFF"]} style={styles.container}>
         {loadingProfile ? (
           <ActivityIndicator size="large" color="#65558F" />
         ) : (
           <View style={styles.avatarContainer}>
-            <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
-            <Text style={styles.title}>{user.username}</Text>
-            <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
-            <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
-            {user.interests && (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={styles.sectionTitle}>Interests</Text>
-              <ScrollView horizontal={true} style={styles.chipContainer}>
-                {parsedInterests.map((interest, index) => (
-                  <Chip
-                    key={index}
-                    style={styles.chip}
-                    textStyle={{ color: '#65558F' }}
-                    mode="outlined"
-                  >
-                    {interest}
-                  </Chip>
-                ))}
-              </ScrollView>
+            <Image style={styles.avatar} source={require("@/assets/images/avatar.png")} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.title}>{user.username}</Text>
+              {user.private && (
+                <Ionicons name="lock-closed" size={20} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
+              )}
             </View>
+            {!user.private ? (
+              <>
+                <Text style={styles.subtitle}>{user.email}</Text>
+                <Text style={styles.subtitle}>Location: {user.location}</Text>
+                <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
+                <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
+                {user.interests && (
+                  <View style={{ justifyContent: "center", alignItems: "center" }}>
+                    <Text style={styles.sectionTitle}>Interests</Text>
+                    <ScrollView horizontal style={styles.chipContainer}>
+                      {parsedInterests.map((interest, index) => (
+                        <Chip
+                          key={index}
+                          style={styles.chip}
+                          textStyle={{ color: "#65558F" }}
+                          mode="outlined"
+                        >
+                          {interest}
+                        </Chip>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </>
+            ) : (
+              <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
             )}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
-              <Button 
-                mode='outlined'
-                labelStyle={styles.followInfo}
-                onPress={() => {
-                  setFollowInfoType('following');
-                  setFollowInfoModalVisible(true);
-                }}
-              >
-                Following: {following.length}
-              </Button>
-              <View style={{ width: 10 }} />
-              <Button
-                mode='outlined'
-                labelStyle={styles.followInfo}
-                onPress={() => {
-                  setFollowInfoType('followers');
-                  setFollowInfoModalVisible(true);
-                }}
-              >
-                Followers: {followers.length}
-              </Button>
-            </View>
+            {isfollowingMe && (
+              <Text style={{ color: "#65558F", fontWeight: "bold", fontSize: 16, paddingTop: 20 }}>
+                Follows you
+              </Text>
+            )}
+            {(!user.private || (isfollowingMe && followingUser)) && (
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20 }}>
+                <Button
+                  mode="outlined"
+                  labelStyle={styles.followInfo}
+                  onPress={() => {
+                    setFollowInfoType("following");
+                    setFollowInfoModalVisible(true);
+                  }}
+                >
+                  Following: {following.length}
+                </Button>
+                <View style={{ width: 10 }} />
+                <Button
+                  mode="outlined"
+                  labelStyle={styles.followInfo}
+                  onPress={() => {
+                    setFollowInfoType("followers");
+                    setFollowInfoModalVisible(true);
+                  }}
+                >
+                  Followers: {followers.length}
+                </Button>
+              </View>
+            )}
             <Button
               mode="contained"
               style={styles.followButton}
-              onPress={() => followingUser ? handleUnfollow() : handleFollow()}
+              onPress={() => (followingUser ? handleUnfollow() : handleFollow())}
             >
-              {followingUser ? 'Unfollow' : 'Follow'}
+              {followingUser ? "Unfollow" : "Follow"}
             </Button>
           </View>
         )}
       </LinearGradient>
-      <Modal transparent={true} visible={isFollowInfoModalVisible} animationType="fade">
+      <Modal transparent visible={isFollowInfoModalVisible} animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{followInfoType === 'following' ? 'Following' : 'Followers'}</Text>
+            <Text style={styles.modalTitle}>
+              {followInfoType === "following" ? "Following" : "Followers"}
+            </Text>
             <ScrollView style={styles.scrollContainer}>
               <UsersView
-                users={followInfoType === 'following' ? following : followers}
-                redirect={true}
-                small={true}
-                searchMade={true}
+                users={followInfoType === "following" ? following : followers}
+                redirect
+                small
+                searchMade
                 closeModal={() => setFollowInfoModalVisible(false)}
               />
             </ScrollView>
@@ -291,7 +323,7 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
             </Button>
           </View>
         </View>
-      </Modal> 
+      </Modal>
     </>
   );
 }
