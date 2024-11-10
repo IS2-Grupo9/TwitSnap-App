@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   modalContent: { width: 300, padding: 20, backgroundColor: '#ffffff', borderRadius: 10, alignItems: 'center' },
   modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   input: { width: '100%', padding: 10, marginVertical: 10, borderColor: '#cccccc', borderWidth: 1, borderRadius: 5 },
-  inputLabel: { alignSelf: 'flex-start', marginBottom: 5, fontWeight: 'bold'},
+  inputLabel: { alignSelf: 'flex-start', marginBottom: 5, marginTop: 2, fontWeight: 'bold'},
   modalButton: { marginTop: 20, paddingHorizontal: 20 },
   cancelButton: { marginTop: 10 },
   scrollContainer: { maxHeight: 300, width: '100%' },

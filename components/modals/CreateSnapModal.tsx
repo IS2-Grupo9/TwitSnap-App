@@ -258,8 +258,9 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     alignSelf: 'flex-start',
-    marginBottom: 5,
-    fontWeight: 'bold'
+    marginTop: 2,
+    fontWeight: 'bold',
+    color: 'black',
   },
   suggestionsContainer: {
     position: 'absolute',
