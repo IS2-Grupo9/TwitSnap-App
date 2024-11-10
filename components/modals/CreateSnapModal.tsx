@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Modal, TextInput, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
+import { View, Modal, TextInput, ActivityIndicator, StyleSheet, ScrollView, Switch } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types/models';
@@ -24,6 +24,7 @@ export default function CreateSnapModal({
     const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
     const [newSnapMessage, setNewSnapMessage] = useState('');
+    const [isPrivate, setIsPrivate] = useState(auth.user?.private || false);
     const [loadingCreateModal, setLoadingCreateModal] = useState(false);
 
     const [suggestedUsersVisible, setSuggestedUsersVisible] = useState(false);
@@ -51,7 +52,8 @@ export default function CreateSnapModal({
           },
           body: JSON.stringify({ 
             user: id,
-            message: newSnapMessage
+            message: newSnapMessage,
+            is_private: isPrivate
           }),
         });
   
@@ -163,6 +165,14 @@ export default function CreateSnapModal({
               onChangeText={handleTextChange}
               multiline
             />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+              <Text style={styles.inputLabel}>Private</Text>
+              <Switch
+                value={isPrivate}
+                onValueChange={(value) => setIsPrivate(value)}
+                trackColor={{ true: '#65558F', false: '#ccc' }}
+              />
+            </View>
             {loadingCreateModal ? (
               <ActivityIndicator size="large" color="#65558F" />
             ) : (
@@ -245,6 +255,11 @@ const styles = StyleSheet.create({
   input: { 
     marginVertical: 10,
     backgroundColor: 'transparent' 
+  },
+  inputLabel: {
+    alignSelf: 'flex-start',
+    marginBottom: 5,
+    fontWeight: 'bold'
   },
   suggestionsContainer: {
     position: 'absolute',
