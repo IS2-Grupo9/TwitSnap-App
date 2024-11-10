@@ -138,10 +138,10 @@ export default function CreateSnapModal({
       }     
     }
 
-    const selectUser = (username: string) => {
+    const selectUser = (user: User) => {
       const lastAt = newSnapMessage.lastIndexOf('@');
       if (lastAt === -1) return;
-      const newText = newSnapMessage.substring(0, lastAt) + `@${username} `;
+      const newText = newSnapMessage.substring(0, lastAt) + `@${user.username} `;
       setNewSnapMessage(newText);
       setSuggestedUsersVisible(false);
     }
