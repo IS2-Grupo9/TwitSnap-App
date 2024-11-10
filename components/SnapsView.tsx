@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Image, RefreshControl, View, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { ActivityIndicator, Card, Text, Button, TextInput as PaperTextInput } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -130,7 +130,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         return;
       }
       const updatedSnaps = snaps.map(snap => {
-        if (snap.ID === snapId) {
+        if (snap.id === snapId) {
           snap.liked = !liked;
         }
         return snap;
@@ -166,13 +166,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         showSnackbar(`Failed to ${action} snap.`, 'error');
         return;
       }
-      const updatedSnaps = snaps.map(snap => {
-        if (snap.ID === snapId) {
-          snap.shared = !shared;
-        }
-        return snap;
-      });
-      setSnaps(updatedSnaps);
+      loadSnaps();
       if (shared) {
         setSharedSnaps(sharedSnaps.filter(id => id !== snapId));
       } else {
@@ -218,7 +212,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
     }
     else {
       if (state && !state.routes.find(route => route.name === 'screens/user-profile')){
-        
       router.push({
         pathname: '/screens/user-profile',
         params: { userId: userId },
@@ -299,7 +292,8 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   
   const fetchSnaps = async () => {
     try {
-      const response = await fetch(`${postsApiUrl}/feed?user_id=${auth.user?.id}`, {
+      const extraFields = auth.user?.interests ? `&interests=${auth.user.interests}` : '';
+      const response = await fetch(`${postsApiUrl}/feed?user_id=${auth.user?.id}${extraFields}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -317,14 +311,16 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       }
       const completedSnaps = snaps.data?.map((snap: any) => ({
         ...snap,
-        liked: Array.isArray(lsnaps) && lsnaps.includes(snap.ID),
-        shared: Array.isArray(ssnaps) && ssnaps.includes(snap.ID),
+        liked: Array.isArray(lsnaps) && lsnaps.includes(snap.id),
+        shared: Array.isArray(ssnaps) && ssnaps.includes(snap.id),
         editable: snap.user === String(auth.user?.id),
         username: 'Unknown',
+        shared_username: 'Unknown',
       }));
       completedSnaps?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
+      console.log(completedSnaps);
       return completedSnaps;
     } catch (error : any) {
       console.error('Error fetching snaps:', error.message);
@@ -354,9 +350,16 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         return;
       }
       const userIds = fetchedSnaps.map(snap => snap.user);
+      const userShareIds = fetchedSnaps.filter(snap => snap.is_share).map(snap => snap.user_share).filter((id): id is string => id !== undefined);
+      if (userShareIds.length > 0) {
+        userIds.push(...userShareIds);
+      }
       const userDict = await fetchUsersById(userIds);
       fetchedSnaps.forEach(snap => {
         snap.username = userDict[snap.user] || 'Unknown';
+        if (snap.is_share && snap.user_share) {
+          snap.shared_username = userDict[snap.user_share] || 'Unknown';
+        }
       });
       setSnaps(fetchedSnaps);
       setLoading(false);
@@ -409,7 +412,17 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
             keyboardShouldPersistTaps="handled"
           >
             {snaps.map(snap => (
-              <Card key={snap.ID} style={styles.snapCard}>
+              <Card key={(snap.id, snap.is_share, snap.user_share)} style={styles.snapCard}>
+                {snap.is_share && (
+                  <TouchableOpacity onPress={() => goToProfile(snap.user_share || '')}
+                    style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, marginLeft: 10 }}
+                  >
+                    <Text style={styles.sharedStyle}>SnapShared by {snap.shared_username || 'Unknown'}</Text>
+                    <MaterialIcons name="repeat" size={18} color="#65558F"
+                      style={{ paddingLeft: 5, marginBottom: 2 }}
+                    />
+                  </TouchableOpacity>
+                )}
                 <Card.Title
                   title={
                     <TouchableOpacity onPress={() => goToProfile(snap.user)}>
@@ -430,7 +443,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                           <TouchableOpacity onPress={() => handleEditSnap(snap)}>
                             <Ionicons name="pencil" size={18} color="#65558F" />
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={() => handleDeleteSnap(snap.ID)}>
+                          <TouchableOpacity onPress={() => handleDeleteSnap(snap.id)}>
                             <Ionicons name="trash" size={18} color="#65558F" />
                           </TouchableOpacity>
                         </View>
@@ -446,15 +459,15 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                     size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => handleLikeSnap(snap.ID, snap.liked)}
+                    onPress={() => handleLikeSnap(snap.id, snap.liked)}
                   />
                   <View style={{width: 5}} />
-                  <Ionicons
-                    name={snap.shared ? 'arrow-redo' : 'arrow-redo-outline'}
+                  <MaterialIcons
+                    name={snap.shared ? "repeat-on" : "repeat"}
                     size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => handleShareSnap(snap.ID, snap.user, snap.shared)}
+                    onPress={() => handleShareSnap(snap.id, snap.user, snap.shared)}
                   />
                   <View style={{width: 5}} />
                   <Ionicons
@@ -462,7 +475,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                     size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => handleInfoModal(snap.ID)}
+                    onPress={() => handleInfoModal(snap.id)}
                   />
                 </Card.Actions>
               </Card>
@@ -546,6 +559,11 @@ const styles = StyleSheet.create({
   subtitleStyle: {
     fontSize: 14,
     color: 'black',
+    marginBottom: 5,
+  },
+  sharedStyle: {
+    fontSize: 14,
+    color: '#65558F',
     marginBottom: 5,
   },
   bottomActions: {

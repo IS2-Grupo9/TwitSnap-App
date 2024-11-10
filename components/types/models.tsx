@@ -1,9 +1,11 @@
 export interface Snap {
-    ID: number;
+    id: number;
     message: string;
     user: string;
     created_at: string;
     updated_at: string;
+    is_share?: boolean;
+    user_share?: string;
 }
 
 export interface ExtendedSnap extends Snap {
@@ -11,6 +13,7 @@ export interface ExtendedSnap extends Snap {
     shared: boolean;
     editable: boolean;
     username: string;
+    shared_username?: string;
 }
 
 export interface User {
