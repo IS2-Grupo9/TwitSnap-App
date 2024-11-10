@@ -342,7 +342,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
     try {
       setOffset(0);
       setHasMore(true);
-      const fetchedSnaps = feed ? await fetchSnaps(0) : await handleSearch();
+      const fetchedSnaps : ExtendedSnap[] = feed ? await fetchSnaps(0) : await handleSearch();
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
         setLoading(false);
@@ -495,16 +495,16 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                 </Card.Actions>
               </Card>
             ))}
-            <View style={{ height: 100 }}>
-              <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
-                {snaps.length === 0 && searchMade ? 'No snaps found' : ''}
-              </Text>
-            </View>
             {hasMore && (
               <Button onPress={loadMoreSnaps} loading={loading} mode="outlined" style={styles.loadMoreButton}>
                 <Text style={{ color: '#65558F' }}>Load More</Text>
               </Button>
             )}
+            <View style={{ height: 100 }}>
+              <Text style={{ textAlign: 'center', color: '#65558F', marginTop: 20 }}>
+                {snaps.length === 0 && searchMade ? 'No snaps found' : ''}
+              </Text>
+            </View>
           </ScrollView>
         }
       </View>
