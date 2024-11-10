@@ -37,3 +37,9 @@ export interface Chat {
     updatedAt: string;
     lastMessage?: Message;
 }
+
+export interface Notification {
+    title: string;
+    body: string;
+    data: any;
+}
