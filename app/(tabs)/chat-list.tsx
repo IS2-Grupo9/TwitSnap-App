@@ -8,16 +8,18 @@ import { ActivityIndicator, Button } from 'react-native-paper';
 import UsersView from '@/components/UsersView';
 import { router } from 'expo-router';
 
+import { useFirebase } from '@/components/contexts/FirebaseContext';
+
 interface ChatListScreenProps {
   showSnackbar: (message: string, type: string) => void;
 }
 
-export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
+export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) {
   const { auth, logout } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
-  const [chats, setChats] = useState<Chat[]>([]);
   const [showCreateChatModal, setShowCreateChatModal] = useState(false);
   const [createChatModalLoading, setCreateChatModalLoading] = useState(false);
+  const [newChatUser, setNewChatUser] = useState<User | null>(null);
   const [newChatUsername, setNewChatUsername] = useState('');
   const [newMessage, setNewMessage] = useState('');
 
@@ -25,6 +27,7 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
   const [loadingSuggestedUsers, setLoadingSuggestedUsers] = useState(true);
   const [suggestedSearchMade, setSuggestedSearchMade] = useState(false);
+  const { chats } = useFirebase().firebaseState;
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -91,8 +94,8 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
     }     
   }
 
-  const selectUser = (username: string) => {
-    setNewChatUsername(username);
+  const selectUser = (user: User) => {
+    setNewChatUsername(user.username);
     setSuggestedUsersVisible(false);
   }
 
@@ -124,7 +127,7 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
 
   const handleCreateChat = async () => {
     try {
-      if (!newChatUsername.trim()) {
+      if (!newChatUser?.username.trim()) {
         showSnackbar('Please enter a username.', 'error');
         return;
       }
@@ -132,13 +135,13 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
         showSnackbar('Please enter a message.', 'error');
         return;
       }
-      if (newChatUsername === auth?.user?.username) {
+      if (newChatUser?.username === auth?.user?.username) {
         showSnackbar('You cannot create a chat with yourself.', 'error');
         return;
       }
   
       const participant1 = auth?.user?.id.toString();
-      const participant2 = (await getUserId(newChatUsername)).toString();
+      const participant2 = newChatUser?.id.toString();
       if (!participant2) {
         showSnackbar('User not found.', 'error');
         return;
@@ -163,7 +166,7 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
         await chatRef.set({
           createdAt: new Date(),
           updatedAt: new Date(),
-          participants: [auth?.user?.username, newChatUsername],
+          participants: [auth?.user?.username, newChatUser?.username],
           lastMessage: {
             sender: auth?.user?.username,
             text: newMessage,
@@ -185,7 +188,7 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
       console.error('Error creating chat:', error.message);
     } finally {
       setCreateChatModalLoading(false);
-      setNewChatUsername('');
+      setNewChatUser(null);
       setNewMessage('');
       setShowCreateChatModal(false);
     }
@@ -197,24 +200,6 @@ export default function ChatListScreen( { showSnackbar }: ChatListScreenProps) {
     const date = timestamp.toDate();
     return date.toLocaleString();
   };
-
-  useEffect(() => {
-    const unsubscribe = firestore()
-      .collection('chats')
-      .where('participants', 'array-contains', auth?.user?.username)
-      .onSnapshot(snapshot => {
-        const chatsData : Chat[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          participants: doc.data().participants,
-          createdAt: doc.data().createdAt,
-          updatedAt: doc.data().updatedAt,
-          lastMessage: doc.data().lastMessage,
-        }));
-        setChats(chatsData);
-      });
-
-    return unsubscribe;
-  }, []);
 
   // Navigate to chat screen
   const handleChatPress = (chat : Chat) => {

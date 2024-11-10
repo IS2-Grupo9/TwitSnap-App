@@ -5,20 +5,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '@/components/contexts/AuthContext';
-import { ExtendedSnap } from '@/components/types/models';
+import { ExtendedSnap, User } from '@/components/types/models';
 import CreateSnapModal from './modals/CreateSnapModal';
 import EditSnapModal from './modals/EditSnapModal';
 import DeleteSnapModal from './modals/DeleteSnapModal';
 
 interface SnapsViewProps {
   showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (user: string) => void;
   feed?: boolean;
   searchType?: string;
 }
 
-export default function SnapsView({ showSnackbar, targetUser, setTargetUser, feed, searchType }: SnapsViewProps) {
+export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewProps) {
   const { auth, logout } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
@@ -219,9 +217,12 @@ export default function SnapsView({ showSnackbar, targetUser, setTargetUser, fee
       }
     }
     else {
-      setTargetUser(userId);
       if (state && !state.routes.find(route => route.name === 'screens/user-profile')){
-        router.push('/screens/user-profile');
+        
+      router.push({
+        pathname: '/screens/user-profile',
+        params: { userId: userId },
+      });
       }
     }
   }

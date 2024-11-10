@@ -9,11 +9,9 @@ import UsersView from '@/components/UsersView';
 
 interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (user: string) => void;
 }
 
-export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUser }: MyProfileScreenProps) {
+export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) {
   const { auth, updateUserData, logout } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
@@ -193,7 +191,7 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
         showSnackbar('Session expired. Please log in again.', 'error');
         logout();
       } else {
-        showSnackbar('Failed to fetch profile data. Please try again.', 'error');
+        showSnackbar('Failed to fetch profileeee data. Please try again.', 'error');
       }
     } catch (error) {
       showSnackbar('An error occurred. Please try again later.', 'error');
@@ -326,7 +324,6 @@ export default function MyProfileScreen({ showSnackbar, targetUser, setTargetUse
             <ScrollView style={styles.scrollContainer}>
               <UsersView
                 users={followInfoType === 'following' ? following : followers}
-                setSelectedUser={setTargetUser}
                 redirect={true}
                 small={true}
                 searchMade={true}

@@ -8,16 +8,15 @@ import ExploreScreen from './explore';
 import ChatListScreen from './chat-list';
 import { TopBar } from '@/components/TopBar';
 import { StyleSheet } from 'react-native';
+import { Chat, User } from '@/components/types/models';
 
 const Tab = createBottomTabNavigator();
 
 interface TabLayoutProps {
   showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (user: string) => void;
 }
 
-export default function TabLayout({ showSnackbar, targetUser, setTargetUser }: TabLayoutProps) {
+export default function TabLayout({ showSnackbar }: TabLayoutProps) {
   const colorScheme = useColorScheme();
 
   return (
@@ -45,7 +44,7 @@ export default function TabLayout({ showSnackbar, targetUser, setTargetUser }: T
               <Ionicons name={focused ? 'search' : 'search-outline'} color={color} size={30} />
             ),
           }}>
-          {() => <ExploreScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+          {() => <ExploreScreen showSnackbar={showSnackbar} />}
         </Tab.Screen>
         <Tab.Screen
           name="home"
@@ -55,7 +54,7 @@ export default function TabLayout({ showSnackbar, targetUser, setTargetUser }: T
               <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={30} />
             ),
           }}>
-          {() => <HomeScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+          {() => <HomeScreen showSnackbar={showSnackbar} />}
         </Tab.Screen>
         <Tab.Screen
         name="chat"

@@ -6,15 +6,15 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 
 interface UserProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (user: string) => void;
 }
 
-export default function UserProfileScreen({ showSnackbar, targetUser, setTargetUser }: UserProfileScreenProps) {
+export default function UserProfileScreen({ showSnackbar }: UserProfileScreenProps) {
   const { auth, logout } = useAuth();
+  const { userId } = useGlobalSearchParams<{ userId: string }>();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [user, setUser] = useState<User>({
@@ -84,7 +84,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
 
   const fetchFollowInfo = async () => {
     try {
-      const followsResponse = await fetch(`${interactionsApiUrl}/interactions/users/${targetUser}/follows`, {
+      const followsResponse = await fetch(`${interactionsApiUrl}/interactions/users/${userId}/follows`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
         showSnackbar('Failed to fetch follow data.', 'error');
         return;
       }
-      const followersResponse = await fetch(`${interactionsApiUrl}/interactions/users/${targetUser}/followers`, {
+      const followersResponse = await fetch(`${interactionsApiUrl}/interactions/users/${userId}/followers`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -128,9 +128,10 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
   }  
 
   const fetchProfile = async () => {
+    console.log('User ID:', userId);
     setLoadingProfile(true);
     try {
-      const response = await fetch(`${apiUrl}/users/user?id=${targetUser}`, {
+      const response = await fetch(`${apiUrl}/users/user?id=${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +168,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
         },
         body: JSON.stringify({
           follower_id: auth.user?.id.toString(),
-          followed_id: targetUser.toString(),
+          followed_id: userId.toString(),
         }),
       });
 
@@ -191,7 +192,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
         },
         body: JSON.stringify({
           follower_id: auth.user?.id.toString(),
-          followed_id: targetUser.toString(),
+          followed_id: userId.toString(),
         }),
       });
 
@@ -208,7 +209,7 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
 
   useEffect(() => {
     fetchProfile();
-  }, [targetUser, followingUser]);
+  }, [followingUser]);
 
   return (
     <>
@@ -279,7 +280,6 @@ export default function UserProfileScreen({ showSnackbar, targetUser, setTargetU
             <ScrollView style={styles.scrollContainer}>
               <UsersView
                 users={followInfoType === 'following' ? following : followers}
-                setSelectedUser={setTargetUser}
                 redirect={true}
                 small={true}
                 searchMade={true}

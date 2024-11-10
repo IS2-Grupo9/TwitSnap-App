@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { PaperProvider, Snackbar } from 'react-native-paper';
 import { AuthProvider, useAuth } from '@/components/contexts/AuthContext';
 import { useFonts } from 'expo-font';
+import { User } from '@/components/types/models';
 import TabLayout from './(tabs)/_layout';
 import CreateAccount from './screens/create-account';
 import Welcome from './screens/welcome';
@@ -16,10 +17,8 @@ import EmailRegister from './screens/email-register';
 import EmailLogin from './screens/email-login';
 import MyProfileScreen from './screens/my-profile';
 import UserProfileScreen from './screens/user-profile';
-
-import { messagingInstance as messaging } from '@/config/firebaseConfig';
-import * as Notifications from 'expo-notifications';
 import ChatScreen from './screens/chat';
+import { FirebaseProvider, useFirebase } from '@/components/contexts/FirebaseContext';
 
 const RootStack = createNativeStackNavigator();
 
@@ -32,21 +31,10 @@ const RootLayout: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarType, setSnackbarType] = useState('success');
   const { auth } = useAuth();
-  const [targetUser, setTargetUser] = useState('');
-  const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
-
-  async function registerForPushNotificationsAsync() {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status === 'granted') {
-      console.log('Notification permissions granted.');
-      setFcmToken(await messaging.getToken());
-    } else {
-      console.log('Notifications permissions not granted.');
-    }
-  }
+  const { firebaseState } = useFirebase();
 
   const showSnackbar = (message: string, type: string) => {
     setSnackbarType(type);
@@ -57,28 +45,9 @@ const RootLayout: React.FC = () => {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
-      registerForPushNotificationsAsync(); // Call once on load
+      firebaseState.registerForPushNotificationsAsync();
     }
   }, [fontsLoaded]);
-
-  useEffect(() => {
-    if (auth.token) {
-      const unsubscribe = messaging.onMessage(async (message: any) => {
-        console.log('onMessage', message);
-        const { title, body } = message.notification;
-    
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: title || 'New Notification',
-            body: body || 'You have a new notification.',
-          },
-          trigger: null,
-        });
-      });
-
-      return unsubscribe;
-    }
-  }, [auth.token]);
 
   if (!fontsLoaded) {
     return null;
@@ -91,16 +60,13 @@ const RootLayout: React.FC = () => {
           {auth.token ? (
             <>
               <RootStack.Screen name="(tabs)">
-                {() => <TabLayout showSnackbar={showSnackbar}
-                  targetUser={targetUser}
-                  setTargetUser={setTargetUser}          
-                  />}
+                {() => <TabLayout showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/my-profile">
-                {() => <MyProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+                {() => <MyProfileScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/user-profile">
-                {() => <UserProfileScreen showSnackbar={showSnackbar} targetUser={targetUser} setTargetUser={setTargetUser} />}
+                {() => <UserProfileScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/chat">
                 {() => <ChatScreen />}
@@ -110,16 +76,16 @@ const RootLayout: React.FC = () => {
             <>
               <RootStack.Screen name="screens/welcome" component={Welcome} />
               <RootStack.Screen name="screens/create-account">
-                {() => <CreateAccount showSnackbar={showSnackbar} fcmToken={fcmToken} />}
+                {() => <CreateAccount showSnackbar={showSnackbar} fcmToken={firebaseState.fcmToken} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/login">
-                {() => <Login showSnackbar={showSnackbar} fcmToken={fcmToken} />}
+                {() => <Login showSnackbar={showSnackbar} fcmToken={firebaseState.fcmToken} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/email-register">
                 {() => <EmailRegister showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/email-login">
-                {() => <EmailLogin showSnackbar={showSnackbar} fcmToken={fcmToken} />}
+                {() => <EmailLogin showSnackbar={showSnackbar} fcmToken={firebaseState.fcmToken} />}
               </RootStack.Screen>
             </>
           )}
@@ -142,7 +108,9 @@ const RootLayout: React.FC = () => {
 const AppLayout: React.FC = () => {
   return (
     <AuthProvider>
-      <RootLayout />
+      <FirebaseProvider>
+        <RootLayout />
+      </FirebaseProvider>
     </AuthProvider>
   );
 };

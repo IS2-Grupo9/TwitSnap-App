@@ -12,11 +12,9 @@ const Tab = createMaterialTopTabNavigator();
 
 interface SearchUsersProps {
   showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (user: string) => void;
 }
 
-function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersProps) {
+function SearchUsers({ showSnackbar }: SearchUsersProps) {
   const { auth, logout } = useAuth();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,7 +94,6 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
           >
             <UsersView
               users={users}
-              setSelectedUser={setTargetUser}
               redirect={true}
               small={false}
               searchMade={searchMade}
@@ -110,11 +107,9 @@ function SearchUsers({ showSnackbar, targetUser, setTargetUser }: SearchUsersPro
 
 interface ExploreScreenProps {
   showSnackbar: (message: string, type: string) => void;
-  targetUser: string;
-  setTargetUser: (targetUser: string) => void;
 }
 
-export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser }: ExploreScreenProps) {
+export default function ExploreScreen({ showSnackbar }: ExploreScreenProps) {
   return (        
     <Tab.Navigator
       screenOptions={{
@@ -131,8 +126,6 @@ export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser 
       >
         {() => <SearchUsers
           showSnackbar={showSnackbar}
-          targetUser={targetUser}
-          setTargetUser={setTargetUser}
         />}
       </Tab.Screen>
       <Tab.Screen 
@@ -141,8 +134,6 @@ export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser 
       >
         {() => <SnapsView
           showSnackbar={showSnackbar}
-          targetUser={targetUser}
-          setTargetUser={setTargetUser}
           feed={false}
           searchType='text'
         />}
@@ -153,8 +144,6 @@ export default function ExploreScreen({ showSnackbar, targetUser, setTargetUser 
       >
         {() => <SnapsView
           showSnackbar={showSnackbar}
-          targetUser={targetUser}
-          setTargetUser={setTargetUser}
           feed={false}
           searchType='hashtag'
         />}

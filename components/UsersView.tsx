@@ -8,19 +8,19 @@ import { ActivityIndicator, Card, TouchableRipple } from 'react-native-paper';
 
 interface UsersViewProps {
   users: User[];
-  setSelectedUser: (user: string) => void;
   redirect: boolean | true;
   small: boolean | false;
   searchMade: boolean | false;
+  setSelectedUser?: (user: User) => void | undefined;
   closeModal?: () => void | undefined;
 }
 
 export default function UsersView({
   users,
-  setSelectedUser,
   redirect,
   small,
   searchMade,
+  setSelectedUser,
   closeModal,
 }: UsersViewProps) {
   const { auth } = useAuth();
@@ -31,18 +31,21 @@ export default function UsersView({
       if (closeModal !== undefined) {
         closeModal();
       }
-      goToProfile(user.id.toString());
+      goToProfile(user);
     } else {
-      setSelectedUser(user.username);
+      setSelectedUser && setSelectedUser(user);
     }
   };
 
-  const goToProfile = (userId: string) => {
-    if (userId === String(auth.user?.id)) {
+  const goToProfile = (user: User) => {
+    if (user?.id.toString() === auth.user?.id.toString()) {
       router.push('/screens/my-profile');
     } else {
-      setSelectedUser(userId);
-      router.push('/screens/user-profile');
+      console.log('user', user.id);
+      router.push({
+        pathname: '/screens/user-profile',
+        params: { userId: user.id },
+      });
     }
   };
 
