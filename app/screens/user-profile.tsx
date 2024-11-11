@@ -151,7 +151,6 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
       });
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setUser(data);
         const interests = data.interests?.split(',').map((interest: string) => interest.trim()) || [];
         setParsedInterests(interests);

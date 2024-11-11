@@ -129,7 +129,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         body: JSON.stringify({ user_id: auth.user?.id.toString(), post_id: snapId.toString() }),
       });
       if (!response.ok) {
-        console.log(response.status);
         showSnackbar(`Failed to ${action} snap.`, 'error');
         return;
       }
@@ -258,7 +257,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         },
       });
       if (!response.ok) {
-        console.log(response.status);
         showSnackbar('Failed to fetch liked snaps.', 'error');
         return [];
       }
@@ -328,7 +326,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       completedSnaps?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-      console.log(completedSnaps);
       return completedSnaps;
     } catch (error : any) {
       console.error('Error fetching snaps:', error.message);

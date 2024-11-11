@@ -31,7 +31,7 @@ export interface Message {
     id: string;
     sender: string;
     text: string;
-    createdAt: string;
+    createdAt: any;
 }
 
 export interface Chat {
@@ -39,6 +39,7 @@ export interface Chat {
     participants: string[];
     createdAt: string;
     updatedAt: string;
+    unreadCount: number;
     lastMessage?: Message;
 }
 

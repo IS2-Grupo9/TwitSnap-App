@@ -72,6 +72,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
             lastMessage: doc.data().lastMessage,
             createdAt: doc.data().createdAt,
             updatedAt: doc.data().updatedAt,
+            unreadCount: doc.data().unreadCount,
           }));
           setChats(chatsData);
         });

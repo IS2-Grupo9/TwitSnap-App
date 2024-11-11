@@ -95,34 +95,9 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
   }
 
   const selectUser = (user: User) => {
+    setNewChatUser(user);
     setNewChatUsername(user.username);
     setSuggestedUsersVisible(false);
-  }
-
-  const getUserId = async (username: string) => {
-    try {
-      const response = await fetch(`${apiUrl}/users/search?username=${username}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${auth.token}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',          
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data[0].id;
-      } else {
-        showSnackbar('Error getting user ID.', 'error');
-        return '';
-      }
-    }
-    catch (error: any) {
-      showSnackbar('Error getting user ID.', 'error');
-      console.error('Error getting user ID:', error.message);
-      return
-    }
   }
 
   const handleCreateChat = async () => {
@@ -160,6 +135,7 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
             text: newMessage,
             createdAt: new Date(),
           },
+          unreadCount: firestore.FieldValue.increment(1),
         });
       } else {
         setCreateChatModalLoading(true);
@@ -172,6 +148,7 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
             text: newMessage,
             createdAt: new Date(),
           },
+          unreadCount: 1,
         });
       }
   
@@ -203,6 +180,18 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
 
   // Navigate to chat screen
   const handleChatPress = (chat : Chat) => {
+    if (chat.lastMessage?.sender !== auth?.user?.username) {
+      // Mark the message as read
+      firestore()
+        .collection('chats')
+        .doc(chat.id)
+        .update({
+          lastMessage: {
+            ...chat.lastMessage,
+          },
+          unreadCount: 0,
+        });
+    }
     router.setParams({ chatId : chat.id });
     router.push({
       pathname: '/screens/chat',
@@ -214,11 +203,20 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
     <View style={styles.container}>
       {chats.length === 0 && <Text style={{ textAlign: 'center', marginTop: 20 }}>No chats found.</Text>}
       <FlatList
-        data={chats}
+        data={chats.sort((a, b) => b.lastMessage?.createdAt.toDate() - a.lastMessage?.createdAt.toDate())}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.chatItem} onPress={() => handleChatPress(item)}>
-            <Text style={styles.chatTitle}>{item.participants.filter(p => p !== auth?.user?.username).join(', ')}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={styles.chatTitle}>{item.participants.filter(p => p !== auth?.user?.username).join(', ')}</Text>
+              {(item.unreadCount && item.lastMessage?.sender !== auth?.user?.username) ? (
+                <View style={{ backgroundColor: 'green', borderRadius: 50, padding: 5, height: 30, width: 30, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ color: 'white' }}>{item.unreadCount}</Text>
+                </View>
+              ) : (
+                <View style={{ backgroundColor: 'transparent', borderRadius: 50, padding: 5, height: 30, width: 30, justifyContent: 'center', alignItems: 'center' }} />
+              )}
+            </View>
             <Text style={styles.chatMessage}>{item.lastMessage?.sender}: {item.lastMessage?.text}</Text>
             <Text style={styles.chatSubtitle}>Last message at {formatFirestoreTimestamp(item.lastMessage?.createdAt)}</Text>
           </TouchableOpacity>
