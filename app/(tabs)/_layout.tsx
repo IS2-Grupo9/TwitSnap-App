@@ -6,7 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from './home';
 import ExploreScreen from './explore';
 import ChatListScreen from './chat-list';
-import { TopBar } from '@/components/TopBar';
+import TopBar from '@/components/TopBar';
 import { StyleSheet, View } from 'react-native';
 import { Chat, User } from '@/components/types/models';
 import { useFirebase } from '@/components/contexts/FirebaseContext';
@@ -23,7 +23,7 @@ export default function TabLayout({ showSnackbar }: TabLayoutProps) {
 
   return (
     <>
-      <TopBar type="default" />
+      <TopBar type="default" showNotifications={true} />
       <Tab.Navigator
         initialRouteName="home"
         backBehavior='history'

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView } from 'react-native';
 import { ActivityIndicator, Button, Card, Chip } from 'react-native-paper';
-import { TopBar } from '@/components/TopBar';
+import TopBar from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
@@ -222,7 +222,7 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
 
   return (
     <>
-      <TopBar type="back" />
+      <TopBar type="back" showNotifications={true} />
       <LinearGradient colors={["#EADDFF", "#FFFFFF"]} style={styles.container}>
         {loadingProfile ? (
           <ActivityIndicator size="large" color="#65558F" />

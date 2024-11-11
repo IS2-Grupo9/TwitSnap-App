@@ -10,6 +10,7 @@ interface FirebaseState {
   unread: boolean;
   notifications: Notification[];
   fcmToken: string | null;
+  clearNotifications: () => void;
   registerForPushNotificationsAsync: () => Promise<void>;
 }
 
@@ -35,6 +36,10 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.log('Notification permissions not granted.');
     }
   };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+  }
 
   useEffect(() => {
     if (auth.token) {
@@ -91,7 +96,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   return (
     <FirebaseContext.Provider
       value={{
-        firebaseState: { chats, unread, notifications, fcmToken, registerForPushNotificationsAsync },
+        firebaseState: { chats, unread, notifications, fcmToken, clearNotifications, registerForPushNotificationsAsync },
         addNotification,
       }}
     >

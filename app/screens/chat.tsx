@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, Button, KeyboardAvoidingVi
 import firestore from '@react-native-firebase/firestore';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Message } from '@/components/types/models';
-import { TopBar } from '@/components/TopBar';
+import TopBar from '@/components/TopBar';
 import { useGlobalSearchParams } from 'expo-router';
 import { ActivityIndicator } from 'react-native-paper';
 
@@ -84,7 +84,7 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <TopBar type="back" />
+      <TopBar type="back" showNotifications={true} />
       <View style={styles.chatContainer}>
         {loading ? (
           <ActivityIndicator size="large" color="#65558F" style={styles.loading} />

@@ -19,6 +19,7 @@ import MyProfileScreen from './screens/my-profile';
 import UserProfileScreen from './screens/user-profile';
 import ChatScreen from './screens/chat';
 import { FirebaseProvider, useFirebase } from '@/components/contexts/FirebaseContext';
+import NotificationListScreen from './screens/notifications';
 
 const RootStack = createNativeStackNavigator();
 
@@ -70,6 +71,9 @@ const RootLayout: React.FC = () => {
               </RootStack.Screen>
               <RootStack.Screen name="screens/chat">
                 {() => <ChatScreen />}
+              </RootStack.Screen>
+              <RootStack.Screen name="screens/notifications">
+                {() => <NotificationListScreen />}
               </RootStack.Screen>
             </>
           ) : (

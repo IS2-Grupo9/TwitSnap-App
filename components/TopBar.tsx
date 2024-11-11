@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Image, TouchableOpacity, StatusBar, StyleSheet } from 'react-native';
 import { Appbar, Avatar, Menu, Divider } from 'react-native-paper';
 import { useAuth } from './contexts/AuthContext';
 import { router } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
+import { useFirebase } from './contexts/FirebaseContext';
 
-export type TopBarProps = {
-  type: 'default' | 'back';
+type TopBarType = 'default' | 'back';
+
+interface TopBarProps {
+  type: TopBarType;
+  showNotifications: boolean;
 };
 
-export function TopBar(
-  props: TopBarProps
-) {
-  const [menuVisible, setMenuVisible] = useState(false)
+export default function TopBar({ type, showNotifications }: TopBarProps) {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const { notifications } = useFirebase().firebaseState;
   const { logout } = useAuth();
-  const openMenu = () => setMenuVisible(true)
-  const closeMenu = () => setMenuVisible(false)
+  const openMenu = () => setMenuVisible(true);
+  const closeMenu = () => setMenuVisible(false);
   const navigation = useNavigation();
 
   const handleProfile = () => {
@@ -29,41 +32,106 @@ export function TopBar(
   const handleLogout = () => {
     logout();
     closeMenu();
-  }
+  };
 
   return (
     <>
       <StatusBar backgroundColor={'#65558F'} />
-      <Appbar.Header style={{ backgroundColor: '#65558F' }}>
-        {props.type === 'back' ? (<Appbar.BackAction onPress={() => router.back()} />)
-        : (
-          <TouchableOpacity onPress={handleProfile} style={{ marginLeft: 10 }}>
-            <Avatar.Image size={40} source={require('../assets/images/avatar.png')} />
-          </TouchableOpacity>
-        )}                
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Image source={require('../assets/images/logo-twitsnap.png')} style={{ width: 120, height: 40 }} resizeMode='contain' />
+      <Appbar.Header style={styles.header}>
+        <View style={styles.leftContainer}>
+          {type === 'back' ? (
+            <Appbar.BackAction onPress={() => router.back()} />
+          ) : (
+            <TouchableOpacity onPress={handleProfile}>
+              <Avatar.Image size={40} source={require('../assets/images/avatar.png')} />
+            </TouchableOpacity>
+          )}
         </View>
-        <Menu
-          visible={menuVisible}
-          onDismiss={closeMenu}
-          anchor={<Appbar.Action icon='dots-vertical' onPress={openMenu} />}
-          anchorPosition='bottom'
-          contentStyle={{ backgroundColor: 'white', borderColor: '#65558F', borderWidth: 1, borderRadius: 5 }}
-        >
-          <Menu.Item
-            onPress={handleProfile}
-            title='Profile'
-            titleStyle={{ color: '#65558F' }}
-          />
-          <Divider style={{ backgroundColor: '#65558F' }} />
-          <Menu.Item
-            onPress={handleLogout}
-            title='Logout'
-            titleStyle={{ color: '#65558F' }}
-          />
-        </Menu>
+
+        <View style={styles.centerContainer}>
+          <Image source={require('../assets/images/logo-twitsnap.png')} style={styles.logo} resizeMode='contain' />
+        </View>
+
+        <View style={styles.rightContainer}>
+          {showNotifications && (
+            <TouchableOpacity onPress={() => router.push('/screens/notifications')}>
+              <View>
+                {notifications.length > 0 && <View style={styles.unreadDot} />}
+                <Appbar.Action icon='bell' />
+              </View>
+            </TouchableOpacity>
+          )}
+          <Menu
+            visible={menuVisible}
+            onDismiss={closeMenu}
+            anchor={<Appbar.Action icon='dots-vertical' onPress={openMenu} />}
+            anchorPosition='bottom'
+            contentStyle={styles.menuContent}
+          >
+            <Menu.Item
+              onPress={handleProfile}
+              title='Profile'
+              titleStyle={styles.menuTitle}
+            />
+            <Divider style={styles.divider} />
+            <Menu.Item
+              onPress={handleLogout}
+              title='Logout'
+              titleStyle={styles.menuTitle}
+            />
+          </Menu>
+        </View>
       </Appbar.Header>
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  header: {
+    backgroundColor: '#65558F',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  leftContainer: {
+    flex: 1,
+    paddingLeft: 10,
+  },
+  centerContainer: {
+    flex: 2,
+    alignItems: 'center',
+  },
+  logo: {
+    width: 120,
+    height: 40,
+  },
+  rightContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingRight: 10,
+  },
+  unreadDot: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#30AE30',
+    zIndex: 1,
+  },
+  menuContent: {
+    backgroundColor: 'white',
+    borderColor: '#65558F',
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  menuTitle: {
+    color: '#65558F',
+  },
+  divider: {
+    backgroundColor: '#65558F',
+  },
+});
