@@ -7,6 +7,7 @@ import { Chat, Notification } from '../types/models';
 
 interface FirebaseState {
   chats: Chat[];
+  unread: boolean;
   notifications: Notification[];
   fcmToken: string | null;
   registerForPushNotificationsAsync: () => Promise<void>;
@@ -22,6 +23,7 @@ const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined
 export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { auth } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
+  const [unread, setUnread] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
 
@@ -75,6 +77,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
             unreadCount: doc.data().unreadCount,
           }));
           setChats(chatsData);
+          setUnread(chatsData.some(chat => chat.unreadCount > 0 && chat.lastMessage?.sender !== auth.user?.username));
         });
 
       return unsubscribe;
@@ -88,7 +91,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   return (
     <FirebaseContext.Provider
       value={{
-        firebaseState: { chats, notifications, fcmToken, registerForPushNotificationsAsync },
+        firebaseState: { chats, unread, notifications, fcmToken, registerForPushNotificationsAsync },
         addNotification,
       }}
     >

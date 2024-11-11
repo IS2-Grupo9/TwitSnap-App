@@ -7,8 +7,9 @@ import HomeScreen from './home';
 import ExploreScreen from './explore';
 import ChatListScreen from './chat-list';
 import { TopBar } from '@/components/TopBar';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Chat, User } from '@/components/types/models';
+import { useFirebase } from '@/components/contexts/FirebaseContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -18,6 +19,7 @@ interface TabLayoutProps {
 
 export default function TabLayout({ showSnackbar }: TabLayoutProps) {
   const colorScheme = useColorScheme();
+  const { unread } = useFirebase().firebaseState;
 
   return (
     <>
@@ -61,7 +63,10 @@ export default function TabLayout({ showSnackbar }: TabLayoutProps) {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} color={color} size={30} />
+            <View>
+              {unread && <View style={styles.unreadDot} />}
+              <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} color={color} size={30} />
+            </View>
           ),
         }}>
           {() => <ChatListScreen showSnackbar={showSnackbar} />}
@@ -70,5 +75,18 @@ export default function TabLayout({ showSnackbar }: TabLayoutProps) {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  unreadDot: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#30AE30',
+    zIndex: 1,
+  },
+});
 
   

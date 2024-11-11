@@ -210,7 +210,7 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={styles.chatTitle}>{item.participants.filter(p => p !== auth?.user?.username).join(', ')}</Text>
               {(item.unreadCount && item.lastMessage?.sender !== auth?.user?.username) ? (
-                <View style={{ backgroundColor: 'green', borderRadius: 50, padding: 5, height: 30, width: 30, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ backgroundColor: '#30AE30', borderRadius: 50, padding: 5, height: 30, width: 30, justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ color: 'white' }}>{item.unreadCount}</Text>
                 </View>
               ) : (
