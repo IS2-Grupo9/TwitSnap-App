@@ -3,7 +3,8 @@ import firestore from '@react-native-firebase/firestore';
 import { messagingInstance as messaging } from '@/config/firebaseConfig';
 import * as Notifications from 'expo-notifications';
 import { useAuth } from './AuthContext';
-import { Chat, Notification } from '../types/models';
+import { Chat, Message, Notification } from '../types/models';
+import { router } from 'expo-router';
 
 interface FirebaseState {
   chats: Chat[];
@@ -42,6 +43,42 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   }
 
   useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const { notification } = response;
+
+      console.log('Notification received:', notification);
+
+      const notificationData = notification.request.content.data;
+
+      console.log('Notification data:', notificationData);
+
+      if (notificationData && notificationData.chatId) {
+        const chat = chats.find((chat) => chat.id === notificationData.chat_id);
+        if (chat && chat.lastMessage?.sender !== auth?.user?.username) {
+          // Mark the message as read
+          firestore()
+            .collection('chats')
+            .doc(chat.id)
+            .update({
+              lastMessage: {
+                ...chat.lastMessage,
+              },
+              unreadCount: 0,
+            });
+        }
+        router.push({
+          pathname: '/screens/chat',
+          params: { chatId: notificationData.chatId },
+        });
+      } else if (notificationData && notificationData.snapId) {
+        // Navigate to the post
+      }
+    });
+
+    return () => subscription.remove();
+  }, [chats]);
+
+  useEffect(() => {
     if (auth.token) {
       const unsubscribe = messaging.onMessage(async (message: any) => {
         const { title, body, data } = message.notification;
@@ -50,17 +87,19 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           title: title || 'New Notification',
           body: body || 'You have a new notification.',
           data: data || {},
+          date: new Date(),
         };
 
-        setNotifications((prev) => [...prev, notification]);
-
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: notification.title,
-            body: notification.body
-          },
-          trigger: null,
-        });
+        if (notification.data.user && notification.data.user === auth.user?.username) {
+          setNotifications((prev) => [...prev, notification]);
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: notification.title,
+              body: notification.body
+            },
+            trigger: null,
+          });
+        }
       });
 
       return unsubscribe;
@@ -88,6 +127,40 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       return unsubscribe;
     }
   }, [auth.token]);
+
+  useEffect(() => {
+    if (auth.token) {
+      const unsubscribe = firestore()
+        .collection('chats')
+        .where('participants', 'array-contains', auth.user?.username)
+        .onSnapshot(snapshot => {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'modified') {
+              const chat = change.doc.data() as Chat;
+              const previousLastMessage = change.doc.get('lastMessage');
+              console.log('Previous last message:', previousLastMessage);
+              console.log('Current last message:', chat.lastMessage);
+              if (previousLastMessage && previousLastMessage !== chat.lastMessage?.createdAt) {
+                if (chat.lastMessage?.sender !== auth.user?.username) {
+                  Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: chat.lastMessage?.sender,
+                      body: chat.lastMessage?.text || 'You have a new message.',
+                      data: { chatId: change.doc.id },
+                    },
+                    trigger: null,
+                  });
+                }
+              }
+            }
+          });
+        });
+  
+      return unsubscribe;
+    }
+  }, [auth.token]);
+
+  
 
   const addNotification = (notification: Notification) => {
     setNotifications((prev) => [...prev, notification]);

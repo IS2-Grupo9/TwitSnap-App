@@ -74,7 +74,6 @@ export default function ChatScreen() {
             },
             unreadCount: firestore.FieldValue.increment(1),
           });
-
         setNewMessage('');
       } catch (error) {
         console.error("Error sending message:", error);
