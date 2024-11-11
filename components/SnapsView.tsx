@@ -20,6 +20,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   const { auth, logout } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
+  const [showLoadMore, setShowLoadMore] = useState(false);
   const [snaps, setSnaps] = useState<ExtendedSnap[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMade, setSearchMade] = useState(feed || false);
@@ -308,7 +309,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       }
       const snaps = await response.json();
 
-      if (snaps.data.length < limit) setHasMore(false);
+      if (snaps.data && snaps.data.length < limit) setHasMore(false);
 
       const lsnaps = await fetchLikedSnaps();
       const ssnaps = await fetchSharedSnaps();
@@ -343,6 +344,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
         setLoading(false);
+        setShowLoadMore(false);
         return;
       }
       const userIds = fetchedSnaps.map(snap => snap.user);
@@ -359,9 +361,11 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       });
       setSnaps(fetchedSnaps);
       setLoading(false);
+      setShowLoadMore(true);
     } catch (error) {
       showSnackbar('Failed to fetch snaps.', 'error');
       setLoading(false);
+      setShowLoadMore(false);
     }
     
   };
@@ -492,7 +496,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                 </Card.Actions>
               </Card>
             ))}
-            {hasMore && (
+            {hasMore && showLoadMore && (
               <Button onPress={loadMoreSnaps} loading={loading} mode="outlined" style={styles.loadMoreButton}>
                 <Text style={{ color: '#65558F' }}>Load More</Text>
               </Button>
