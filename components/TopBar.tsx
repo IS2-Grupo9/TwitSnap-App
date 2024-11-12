@@ -40,7 +40,7 @@ export default function TopBar({ type, showNotifications }: TopBarProps) {
       <Appbar.Header style={styles.header}>
         <View style={styles.leftContainer}>
           {type === 'back' ? (
-            <Appbar.BackAction onPress={() => router.back()} />
+            <Appbar.BackAction onPress={() => router.back()} color='white' />
           ) : (
             <TouchableOpacity onPress={handleProfile}>
               <Avatar.Image size={40} source={require('../assets/images/avatar.png')} />
@@ -57,14 +57,14 @@ export default function TopBar({ type, showNotifications }: TopBarProps) {
             <TouchableOpacity onPress={() => router.push('/screens/notifications')}>
               <View>
                 {notifications.length > 0 && <View style={styles.unreadDot} />}
-                <Appbar.Action icon='bell' />
+                <Appbar.Action icon='bell' color='white' />
               </View>
             </TouchableOpacity>
           )}
           <Menu
             visible={menuVisible}
             onDismiss={closeMenu}
-            anchor={<Appbar.Action icon='dots-vertical' onPress={openMenu} />}
+            anchor={<Appbar.Action icon='dots-vertical' onPress={openMenu} color='white' />}
             anchorPosition='bottom'
             contentStyle={styles.menuContent}
           >
