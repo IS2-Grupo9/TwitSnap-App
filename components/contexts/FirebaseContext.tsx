@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import * as Device from 'expo-device';
 import firestore from '@react-native-firebase/firestore';
 import { messagingInstance as messaging } from '@/config/firebaseConfig';
 import * as Notifications from 'expo-notifications';
@@ -10,15 +11,24 @@ interface FirebaseState {
   chats: Chat[];
   unread: boolean;
   notifications: Notification[];
+  markAsRead: () => void;
   fcmToken: string | null;
   clearNotifications: () => void;
-  registerForPushNotificationsAsync: () => Promise<void>;
+  registerForPushNotificationsAsync: () => void;
 }
 
 interface FirebaseContextType {
   firebaseState: FirebaseState;
   addNotification: (notification: Notification) => void;
 }
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
 
@@ -30,80 +40,104 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [previousLastMessages, setPreviousLastMessages] = useState<{ [key: string]: Message }>({});
 
-  const registerForPushNotificationsAsync = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status === 'granted') {
-      setFcmToken(await messaging.getToken());
-    } else {
-      console.log('Notification permissions not granted.');
-    }
-  };
+  async function registerForPushNotificationsAsync() {
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        alert('Failed to get push token for push notification!');
+        return;
+      }
+      const token = (await Notifications.getDevicePushTokenAsync()).data;
+      setFcmToken(token);
 
-  const clearNotifications = () => {
-    setNotifications([]);
-  }
+      if (auth.token) {
+        firestore()
+          .collection('users')
+          .doc(auth.user?.username)
+          .update({
+            fcmTokens: firestore.FieldValue.arrayUnion(token),
+          });
+      }      
+    } else {
+      console.log('Must use physical device for Push Notifications');
+    }
+  }  
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-      const { notification } = response;
-      const notificationData = notification.request.content.data;
+    // Background messages
+    messaging.setBackgroundMessageHandler(async remoteMessage => {
+      console.log('Message handled in the background!', remoteMessage);
+      const notification : Notification = {
+        id: remoteMessage.messageId || '',
+        title: remoteMessage.notification?.title || '',
+        body: remoteMessage.notification?.body || '',
+        data: remoteMessage.data,
+        date: new Date(),
+        read: false,
+      };
+      addNotification(notification);      
+    });
+    // Foreground messages
+    messaging.onMessage(async remoteMessage => {
+      const notification : Notification = {
+        id: remoteMessage.messageId || '',
+        title: remoteMessage.notification?.title || '',
+        body: remoteMessage.notification?.body || '',
+        data: remoteMessage.data,
+        date: new Date(),
+        read: false,
+      };
+      addNotification(notification);
+    });
+  }, []);
 
-      if (notificationData && notificationData.chatId) {
-        const chat = chats.find((chat) => chat.id === notificationData.chatId);
-        if (chat && (chat.lastMessage?.sender !== auth?.user?.username)) {
-          // Mark the message as read
-          firestore()
-            .collection('chats')
-            .doc(chat.id)
-            .update({
-              lastMessage: {
-                ...chat.lastMessage,
-              },
-              unreadCount: 0,
-            });
-        }
-        router.push({
-          pathname: '/screens/chat',
-          params: { chatId: notificationData.chatId },
-        });
-      } else if (notificationData && notificationData.snapId) {
-        router.push({
-          pathname: '/screens/snap',
-          params: { snapId: notificationData.snapId.toString() },
-        });
+  useEffect(() => {
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response);
+      if (response.actionIdentifier === "expo.modules.notifications.actions.DEFAULT") {
+        const notificationData = response.notification.request.content.data;
+        handleNotificationTap(notificationData, response.notification.request.identifier);
       }
     });
 
-    return () => subscription.remove();
-  }, [chats]);
+    return () => {
+      responseSubscription.remove();
+    };
+  }, []);
 
-  useEffect(() => {
-    if (auth.token) {
-      const unsubscribe = messaging.onMessage(async (message: any) => {
-        const { title, body, data } = message.notification;
-        
-        const notification: Notification = {
-          title: title || 'New Notification',
-          body: body || 'You have a new notification.',
-          data: data || {},
-          date: new Date(),
-        };
-
-        if (notification.data.user && notification.data.user === auth.user?.username) {
-          setNotifications((prev) => [...prev, notification]);
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: notification.title,
-              body: notification.body
+  const handleNotificationTap = (data : any, notificationId : string) => {
+    if (data && data.chatId) {
+      const chat = chats.find((chat) => chat.id === data.chatId);
+      if (chat && (chat.lastMessage?.sender !== auth?.user?.username)) {
+        // Mark the message as read
+        firestore()
+          .collection('chats')
+          .doc(chat.id)
+          .update({
+            lastMessage: {
+              ...chat.lastMessage,
             },
-            trigger: null,
+            unreadCount: 0,
           });
-        }
+      }
+      router.push({
+        pathname: '/screens/chat',
+        params: { chatId: data.chatId },
       });
-
-      return unsubscribe;
+    } else if (data && data.snapId) {
+      // Mark the notification as read
+      setNotifications((prev) => prev.map((notification) => notification.id === notificationId ? { ...notification, read: true } : notification));
+      router.push({
+        pathname: '/screens/snap',
+        params: { snapId: data.snapId.toString() },
+      });
     }
-  }, [auth.token]);
+  };
 
   useEffect(() => {
     if (auth.token) {
@@ -136,6 +170,9 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           snapshot.docChanges().forEach(change => {
             if (change.type === 'modified' || change.type === 'added') {
               const chat = change.doc.data() as Chat;
+              if (!previousLastMessages[change.doc.id]) {
+                return;
+              }
               const previousLastMessage = previousLastMessages[change.doc.id];
               if (!previousLastMessage || previousLastMessage.createdAt < chat.lastMessage?.createdAt) {
                 setPreviousLastMessages((prev) => ({
@@ -161,16 +198,22 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, [auth.token]);
 
-  
+  const markAsRead = () => {
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+  }  
 
   const addNotification = (notification: Notification) => {
     setNotifications((prev) => [...prev, notification]);
   };
 
+  const clearNotifications = () => {
+    setNotifications([]);
+  }
+
   return (
     <FirebaseContext.Provider
       value={{
-        firebaseState: { chats, unread, notifications, fcmToken, clearNotifications, registerForPushNotificationsAsync },
+        firebaseState: { chats, unread, notifications, markAsRead, fcmToken, clearNotifications, registerForPushNotificationsAsync },
         addNotification,
       }}
     >

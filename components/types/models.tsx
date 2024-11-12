@@ -45,8 +45,10 @@ export interface Chat {
 }
 
 export interface Notification {
+    id: string;
     title: string;
     body: string;
     data: any;
     date: Date;
+    read: boolean;
 }

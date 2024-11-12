@@ -21,6 +21,8 @@ export default function TopBar({ type, showNotifications }: TopBarProps) {
   const closeMenu = () => setMenuVisible(false);
   const navigation = useNavigation();
 
+  const unReadNotifications = notifications.filter(notification => !notification.read);
+
   const handleProfile = () => {
     const state = navigation.getState();
     if (state && !state.routes.find(route => route.name === 'screens/my-profile')){
@@ -56,7 +58,7 @@ export default function TopBar({ type, showNotifications }: TopBarProps) {
           {showNotifications && (
             <TouchableOpacity onPress={() => router.push('/screens/notifications')}>
               <View>
-                {notifications.length > 0 && <View style={styles.unreadDot} />}
+                {unReadNotifications.length > 0 && <View style={styles.unreadDot} />}
                 <Appbar.Action icon='bell' color='white' />
               </View>
             </TouchableOpacity>
@@ -114,8 +116,8 @@ const styles = StyleSheet.create({
   },
   unreadDot: {
     position: 'absolute',
-    right: 0,
-    bottom: 0,
+    right: 15,
+    top: 15,
     width: 10,
     height: 10,
     borderRadius: 5,

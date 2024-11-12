@@ -215,6 +215,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
 
   const loadSnap = async () => {
     try {
+      if (!snapId) return;
       const response = await fetch(`${postApiUrl}/snaps/${snapId}`, {
         method: 'GET',
         headers: {
@@ -222,7 +223,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
         },
       });
       if (!response.ok) {
-        router.push('/(tabs)/home');
+        showSnackbar('Failed to fetch snap.', 'error');
         return;
       }
       const snap = (await response.json()).data;
@@ -237,7 +238,6 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
       setLoading(false);
     } catch (error) {
       showSnackbar('Failed to fetch snap.', 'error');
-      router.push('/(tabs)/home');
     }
   }
 

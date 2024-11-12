@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useFirebase } from '@/components/contexts/FirebaseContext';
@@ -8,8 +8,7 @@ import TopBar from '@/components/TopBar';
 
 const NotificationListScreen: React.FC = () => {
   const { auth } = useAuth();
-  const { notifications, chats } = useFirebase().firebaseState;
-  
+  const { notifications, markAsRead, chats } = useFirebase().firebaseState;
 
   const handleNotificationPress = (notification : any) => {
     if (notification.data.snapId) {
@@ -38,6 +37,15 @@ const NotificationListScreen: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    markAsRead();
+  } , []);
+
+  const formatDate = (date : Date) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(date).toLocaleDateString('en-US', options);
+  };
+
   return (
     <View style={styles.container}>
       <TopBar type="back" showNotifications={false} />
@@ -54,6 +62,7 @@ const NotificationListScreen: React.FC = () => {
             >
               <Text style={styles.notificationTitle}>{item.title}</Text>
               <Text style={styles.notificationBody}>{item.body}</Text>
+              <Text style={styles.notificationDate}>{formatDate(item.date)}</Text>
             </TouchableOpacity>
           )}
         />
@@ -79,6 +88,10 @@ const styles = StyleSheet.create({
   notificationBody: {
     marginTop: 4,
     color: '#555',
+  },
+  notificationDate: {
+    marginTop: 4,
+    color: '#999',
   },
 });
 
