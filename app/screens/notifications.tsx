@@ -12,8 +12,11 @@ const NotificationListScreen: React.FC = () => {
   
 
   const handleNotificationPress = (notification : any) => {
-    if (notification.data.post_id) {
-      // Navigate to the post
+    if (notification.data.snapId) {
+      router.push({
+        pathname: '/screens/snap',
+        params: { snapId: notification.data.snapId.toString() },
+      });
     } else if (notification.data.chat_id) {
       const chat = chats.find((chat) => chat.id === notification.data.chat_id);
       if (chat && chat.lastMessage?.sender !== auth?.user?.username) {

@@ -30,7 +30,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   // TODO: Do through gateway API with authorization
   const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
-  const statisticsApiUrl = process.env.EXPO_PUBLIC_STATISTICS_URL;
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
@@ -41,18 +40,12 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
   const [snapToDelete, setSnapToDelete] = useState<number | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const [currentSnapLikes, setCurrentSnapLikes] = useState(0);
-  const [currentSnapShares, setCurrentSnapShares] = useState(0);
-  const [infoModalVisible, setInfoModalVisible] = useState(false);
-  const [infoModalLoading, setInfoModalLoading] = useState(false);
-
   const [likedSnaps, setLikedSnaps] = useState<number[]>([]);
   const [sharedSnaps, setSharedSnaps] = useState<number[]>([]);
 
   const [limit] = useState(10);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true); 
-
 
   const formatDate = (created_at: string | undefined, updated_at: string | undefined) => {
     const dateString = updated_at || created_at;
@@ -118,6 +111,13 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
     setDeleteModalVisible(true);
   };
 
+  const handleInfo = (snapId: number) => {
+    router.push({
+      pathname: '/screens/snap',
+      params: { snapId: snapId.toString() },
+    });
+  };
+
   const handleLikeSnap = async (snapId: number, liked: boolean) => {
     const method = liked ? 'DELETE' : 'POST';
     const action = liked ? 'unlike' : 'like';
@@ -181,31 +181,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
       showSnackbar(`Failed to ${action} snap.`, 'error');
     }      
   };
-
-  const handleInfoModal = async (snapId: number) => {
-    setInfoModalVisible(true);
-    setInfoModalLoading(true);
-    try {
-      const response = await fetch(`${statisticsApiUrl}/statistics/posts/${snapId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        showSnackbar('Failed to fetch snap information.', 'error');
-        return;
-      }
-      const likes = await response.json();
-      setCurrentSnapLikes(likes.data.like_counter);
-      setCurrentSnapShares(likes.data.share_counter);
-      setInfoModalLoading(false);
-    } catch (error) {
-      setInfoModalVisible(false);
-      setInfoModalLoading(false);
-      showSnackbar('Failed to fetch snap information.', 'error');
-    }
-  }
 
   const goToProfile = (userId: string) => {
     const state = navigation.getState();
@@ -498,7 +473,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                     size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => handleInfoModal(snap.id)}
+                    onPress={() => handleInfo(snap.id)}
                   />
                 </Card.Actions>
               </Card>
@@ -544,24 +519,6 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
         setSnapToDelete={setSnapToDelete}
         loadSnaps={loadSnaps}
       />
-      <Modal transparent={true} visible={infoModalVisible} animationType="fade">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {infoModalLoading ? (
-              <ActivityIndicator size="large" color="#65558F" />
-            ) : (
-              <View style={{ width: '100%' }}>
-                <Text style={styles.modalTitle}>Snap Information</Text>
-                <Text style={styles.modalText}>Likes: {currentSnapLikes}</Text>
-                <Text style={styles.modalText}>Shares: {currentSnapShares}</Text>
-              </View>
-            )}
-            <Button mode="text" onPress={() => setInfoModalVisible(false)} style={styles.cancelButton}>
-              Close
-            </Button>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

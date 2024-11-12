@@ -67,7 +67,10 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           params: { chatId: notificationData.chatId },
         });
       } else if (notificationData && notificationData.snapId) {
-        // Navigate to the post
+        router.push({
+          pathname: '/screens/snap',
+          params: { snapId: notificationData.snapId.toString() },
+        });
       }
     });
 
