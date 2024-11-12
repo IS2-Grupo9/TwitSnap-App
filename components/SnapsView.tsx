@@ -426,7 +426,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
             keyboardShouldPersistTaps="handled"
           >
             {snaps.map(snap => (
-              <Card key={(snap.id, snap.is_share, snap.user_share)} style={styles.snapCard}>
+              <Card key={`${snap.id}${snap.is_share ? `-share${snap.user_share}` : ''}`} style={styles.snapCard}>
                 {snap.is_share && (
                   <TouchableOpacity onPress={() => goToProfile(snap.user_share || '')}
                     style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, marginLeft: 10 }}
