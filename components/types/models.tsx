@@ -4,6 +4,7 @@ export interface Snap {
     user: string;
     created_at: string;
     updated_at: string;
+    is_private: boolean;
     is_share?: boolean;
     user_share?: string;
 }

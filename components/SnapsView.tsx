@@ -444,8 +444,15 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                     </TouchableOpacity>
                   }
                   subtitle={
-
-                    formatDate(snap.created_at, snap.updated_at)}
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.subtitleStyle}>
+                        {formatDate(snap.created_at, snap.updated_at)}
+                      </Text>
+                      {snap.is_private && (
+                        <Ionicons name="lock-closed" size={15} color="#65558F" style={{ marginLeft: 8, marginBottom: 5 }} />
+                      )}
+                    </View>
+}
                   titleStyle={styles.titleStyle}
                   subtitleStyle={styles.subtitleStyle}
                   left={() => (

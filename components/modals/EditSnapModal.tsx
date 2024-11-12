@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Modal, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Modal, TextInput, ActivityIndicator, StyleSheet, Switch } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
 import { ExtendedSnap } from '../types/models';
@@ -27,6 +27,8 @@ export default function EditSnapModal({
     
     const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
 
+    const [isPrivate, setIsPrivate] = useState(editedSnap?.is_private || false);
+
     const [loadingEditModal, setLoadingEditModal] = useState(false);
 
     const handleSubmitEditSnap = async () => {
@@ -45,7 +47,8 @@ export default function EditSnapModal({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            message: editedSnapMessage
+            message: editedSnapMessage,
+            is_private: isPrivate
           }),
         });
 
@@ -88,6 +91,14 @@ export default function EditSnapModal({
               onChangeText={setEditedSnapMessage}
               multiline
             />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+              <Text style={styles.inputLabel}>Private</Text>
+              <Switch
+                value={isPrivate}
+                onValueChange={(value) => setIsPrivate(value)}
+                trackColor={{ true: '#65558F', false: '#ccc' }}
+              />
+            </View>
             {loadingEditModal ? (
               <ActivityIndicator size="large" color="#65558F" />
             ) : (
@@ -151,5 +162,11 @@ const styles = StyleSheet.create({
   input: { 
     marginVertical: 10,
     backgroundColor: 'transparent' 
+  },
+  inputLabel: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    fontWeight: 'bold',
+    color: 'black',
   },
 });
