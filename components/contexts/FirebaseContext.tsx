@@ -46,17 +46,11 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(response => {
       const { notification } = response;
-
-      console.log('Notification received:', notification);
-
       const notificationData = notification.request.content.data;
-
-      console.log('Notification data:', notificationData);
 
       if (notificationData && notificationData.chatId) {
         const chat = chats.find((chat) => chat.id === notificationData.chatId);
         if (chat && (chat.lastMessage?.sender !== auth?.user?.username)) {
-          console.log('Marking chat as read:', chat.id);
           // Mark the message as read
           firestore()
             .collection('chats')
@@ -68,7 +62,6 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
               unreadCount: 0,
             });
         }
-        console.log('Navigating to chat:', notificationData.chatId);
         router.push({
           pathname: '/screens/chat',
           params: { chatId: notificationData.chatId },
@@ -141,7 +134,6 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
             if (change.type === 'modified' || change.type === 'added') {
               const chat = change.doc.data() as Chat;
               const previousLastMessage = previousLastMessages[change.doc.id];
-              console.log('Chat updated:', chat);
               if (!previousLastMessage || previousLastMessage.createdAt < chat.lastMessage?.createdAt) {
                 setPreviousLastMessages((prev) => ({
                   ...prev,
