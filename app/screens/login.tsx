@@ -24,9 +24,7 @@ const Login = ({ showSnackbar, fcmToken }: LoginProps) => {
   const router = useRouter();
 
   async function registerFcmToken(username: string) {    
-    if (fcmToken && username) {
-      console.log('Your Firebase Cloud Messaging token is:', fcmToken);
-  
+    if (fcmToken && username) {  
       try {
         const userDocRef = fireDB.collection('users').doc(username);
   
@@ -36,13 +34,11 @@ const Login = ({ showSnackbar, fcmToken }: LoginProps) => {
           },
           { merge: true }
         );
-  
-        console.log('FCM token added to Firestore.');
       } catch (error) {
         console.error('Error adding FCM token to Firestore:', error);
       }
     } else {
-      console.log('Failed to get Firebase Cloud Messaging token or username not found.');
+      console.error('Failed to get Firebase Cloud Messaging token or username not found.');
     }
   }
 
