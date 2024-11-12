@@ -167,6 +167,7 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
       setCreateChatModalLoading(false);
       setNewChatUser(null);
       setNewMessage('');
+      setNewChatUsername('');
       setShowCreateChatModal(false);
     }
   };
@@ -247,6 +248,7 @@ export default function ChatListScreen( { showSnackbar } : ChatListScreenProps) 
             ) : (
             <Button
               mode="contained"
+              disabled={!newChatUser}
               onPress={handleCreateChat}
               buttonColor="#65558F"
               textColor="#FFFFFF"

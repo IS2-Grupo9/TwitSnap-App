@@ -28,6 +28,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [unread, setUnread] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
+  const [previousLastMessages, setPreviousLastMessages] = useState<{ [key: string]: Message }>({});
 
   const registerForPushNotificationsAsync = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
@@ -53,8 +54,9 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.log('Notification data:', notificationData);
 
       if (notificationData && notificationData.chatId) {
-        const chat = chats.find((chat) => chat.id === notificationData.chat_id);
-        if (chat && chat.lastMessage?.sender !== auth?.user?.username) {
+        const chat = chats.find((chat) => chat.id === notificationData.chatId);
+        if (chat && (chat.lastMessage?.sender !== auth?.user?.username)) {
+          console.log('Marking chat as read:', chat.id);
           // Mark the message as read
           firestore()
             .collection('chats')
@@ -66,6 +68,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
               unreadCount: 0,
             });
         }
+        console.log('Navigating to chat:', notificationData.chatId);
         router.push({
           pathname: '/screens/chat',
           params: { chatId: notificationData.chatId },
@@ -135,12 +138,15 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
         .where('participants', 'array-contains', auth.user?.username)
         .onSnapshot(snapshot => {
           snapshot.docChanges().forEach(change => {
-            if (change.type === 'modified') {
+            if (change.type === 'modified' || change.type === 'added') {
               const chat = change.doc.data() as Chat;
-              const previousLastMessage = change.doc.get('lastMessage');
-              console.log('Previous last message:', previousLastMessage);
-              console.log('Current last message:', chat.lastMessage);
-              if (previousLastMessage && previousLastMessage !== chat.lastMessage?.createdAt) {
+              const previousLastMessage = previousLastMessages[change.doc.id];
+              console.log('Chat updated:', chat);
+              if (!previousLastMessage || previousLastMessage.createdAt < chat.lastMessage?.createdAt) {
+                setPreviousLastMessages((prev) => ({
+                  ...prev,
+                  [change.doc.id]: chat.lastMessage as Message,
+                }));
                 if (chat.lastMessage?.sender !== auth.user?.username) {
                   Notifications.scheduleNotificationAsync({
                     content: {
