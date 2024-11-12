@@ -42,7 +42,12 @@ const NotificationListScreen: React.FC = () => {
   } , []);
 
   const formatDate = (date : Date) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    const options = { 
+      year: 'numeric' as const,
+      month: 'short' as const,
+      day: 'numeric' as const,
+      hour: '2-digit' as const,
+      minute: '2-digit' as const };
     return new Date(date).toLocaleDateString('en-US', options);
   };
 
