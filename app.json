@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "TwitSnap",
-    "slug": "TwitSnap",
+    "slug": "twitsnap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "TwitSnap",
+    "scheme": "twitsnap",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
