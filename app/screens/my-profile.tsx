@@ -8,6 +8,7 @@ import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useFirebase } from '@/components/contexts/FirebaseContext';
+import { router } from 'expo-router';
 
 interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -208,6 +209,13 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     }
   };
 
+  const goToProfileFeed = (userId: any) => {
+    router.push({
+      pathname: '/screens/profile-feed',
+      params: { userId : userId.toString() },
+    });
+  }
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -285,7 +293,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
               >
                 Edit Profile
               </Button>    
-              <TouchableOpacity onPress={() => {}} style={styles.moreButton}>
+              <TouchableOpacity onPress={() => goToProfileFeed(user.id)} style={styles.moreButton}>
                 <Ionicons name="document-text-outline" size={24} color="#65558F" />
                 <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Snaps</Text>
               </TouchableOpacity>

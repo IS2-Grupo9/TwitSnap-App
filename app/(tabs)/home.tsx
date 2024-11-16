@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/contexts/AuthContext';
-import { ExtendedSnap, User } from '@/components/types/models';
 import SnapsView from '@/components/SnapsView';
 
 interface HomeScreenProps {

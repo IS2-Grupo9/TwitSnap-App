@@ -13,10 +13,12 @@ import DeleteSnapModal from './modals/DeleteSnapModal';
 interface SnapsViewProps {
   showSnackbar: (message: string, type: string) => void;
   feed?: boolean;
+  userFeed?: boolean;
+  userId?: string;
   searchType?: string;
 }
 
-export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewProps) {
+export default function SnapsView({ showSnackbar, feed, userFeed, userId, searchType }: SnapsViewProps) {
   const { auth, logout } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
@@ -310,12 +312,50 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
     }
   };
 
+  const fetchProfileSnaps = async () => {
+    try {
+      const response = await fetch(`${postsApiUrl}/users/${userId}/feed`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        showSnackbar('Failed to fetch snaps.', 'error');
+        return [];
+      }
+      const snaps = await response.json();
+
+      const lsnaps = await fetchLikedSnaps();
+      const ssnaps = await fetchSharedSnaps();
+      if (!Array.isArray(snaps.data)) {
+        return [];
+      }
+      const completedSnaps = snaps.data?.map((snap: any) => ({
+        ...snap,
+        liked: Array.isArray(lsnaps) && lsnaps.includes(snap.id),
+        shared: Array.isArray(ssnaps) && ssnaps.includes(snap.id),
+        editable: snap.user === String(auth.user?.id),
+        username: 'Unknown',
+        shared_username: 'Unknown',
+      }));
+      completedSnaps?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      return completedSnaps;
+    } catch (error : any) {
+      console.error('Error fetching snaps:', error.message);
+      showSnackbar('Failed to fetch snaps.', 'error');
+      return [];
+    }
+  };
+
   const loadSnaps = async () => {
     setLoading(true);
     try {
       setOffset(0);
       setHasMore(true);
-      const fetchedSnaps : ExtendedSnap[] = feed ? await fetchSnaps(0) : await handleSearch();
+      const fetchedSnaps : ExtendedSnap[] = feed ? (userFeed ? await fetchProfileSnaps() : await fetchSnaps(0)) : await handleSearch();
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
         setLoading(false);
@@ -478,7 +518,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
                 </Card.Actions>
               </Card>
             ))}
-            {hasMore && showLoadMore && (
+            {hasMore && showLoadMore && !userFeed && (
               <Button onPress={loadMoreSnaps} loading={loading} mode="outlined" style={styles.loadMoreButton}>
                 <Text style={{ color: '#65558F' }}>Load More</Text>
               </Button>
@@ -491,7 +531,7 @@ export default function SnapsView({ showSnackbar, feed, searchType }: SnapsViewP
           </ScrollView>
         }
       </View>
-      { feed && (
+      { feed && !userFeed && (
         <TouchableOpacity style={styles.floatingButton} onPress={handleCreateSnap}>
           <Ionicons name="create-outline" size={36} color="white" />
         </TouchableOpacity>

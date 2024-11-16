@@ -6,7 +6,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
-import { useGlobalSearchParams, useRouter } from 'expo-router';
+import { router, useGlobalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 interface UserProfileScreenProps {
@@ -215,6 +215,13 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
       showSnackbar('Failed to unfollow user.', 'error');
     }
   }
+  
+  const goToProfileFeed = (userId: any) => {
+    router.push({
+      pathname: '/screens/profile-feed',
+      params: { userId : userId.toString() },
+    });
+  }
 
   useEffect(() => {
     fetchProfile();
@@ -301,7 +308,7 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
             </Button>
             <View style={{ position: 'absolute', bottom: 0, right: 0 }}>
               {(!user.private || followingUser) && (
-                <TouchableOpacity onPress={() => {}} style={styles.snapsButton}>
+                <TouchableOpacity onPress={() => goToProfileFeed(userId)} style={styles.snapsButton}>
                   <Ionicons name="document-text-outline" size={24} color="#65558F" />
                   <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Snaps</Text>
                 </TouchableOpacity>
