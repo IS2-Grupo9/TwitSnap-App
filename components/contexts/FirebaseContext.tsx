@@ -15,6 +15,7 @@ interface FirebaseState {
   fcmToken: string | null;
   clearNotifications: () => void;
   registerForPushNotificationsAsync: () => void;
+  registerFCMToken: (username: string) => void;
 }
 
 interface FirebaseContextType {
@@ -55,18 +56,33 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       const token = (await Notifications.getDevicePushTokenAsync()).data;
       setFcmToken(token);
 
-      if (auth.token) {
-        firestore()
-          .collection('users')
-          .doc(auth.user?.username)
-          .update({
-            fcmTokens: firestore.FieldValue.arrayUnion(token),
-          });
+      if (auth.token && auth.user?.username) {
+        registerFCMToken(auth.user.username);
       }      
     } else {
       console.log('Must use physical device for Push Notifications');
     }
   }  
+
+  async function registerFCMToken(username: string) {
+    if (auth.token && fcmToken) {
+      try {
+        const userDoc = await firestore().collection('users').doc(username);
+        const user = await userDoc.get();
+        if (user.exists) {
+          await userDoc.update({
+            fcmTokens: firestore.FieldValue.arrayUnion(fcmToken),
+          });
+        } else {
+          await userDoc.set({
+            fcmTokens: [fcmToken],
+          });
+        }
+      } catch (error) {
+        console.error('Error registering FCM token:', error);
+      }        
+    }
+  }
 
   useEffect(() => {
     // Background messages
@@ -213,7 +229,16 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   return (
     <FirebaseContext.Provider
       value={{
-        firebaseState: { chats, unread, notifications, markAsRead, fcmToken, clearNotifications, registerForPushNotificationsAsync },
+        firebaseState: { 
+          chats,
+          unread,
+          notifications,
+          markAsRead,
+          fcmToken,
+          clearNotifications,
+          registerForPushNotificationsAsync,
+          registerFCMToken,
+         },
         addNotification,
       }}
     >

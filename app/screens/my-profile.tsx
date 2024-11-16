@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
 import { Ionicons } from '@expo/vector-icons';
+import { useFirebase } from '@/components/contexts/FirebaseContext';
 
 interface MyProfileScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -14,6 +15,7 @@ interface MyProfileScreenProps {
 
 export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) {
   const { auth, updateUserData, logout } = useAuth();
+  const { registerFCMToken } = useFirebase().firebaseState;
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [isEditModalVisible, setEditModalVisible] = useState(false);
@@ -76,7 +78,8 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
       });
 
       if (response.ok) {
-        fetchProfile();
+        await fetchProfile();
+        registerFCMToken(usernameInput);
         showSnackbar('Profile updated successfully!', 'success');
       } else if (response.status === 400) {
         const message = await response.text();
@@ -196,7 +199,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
         showSnackbar('Session expired. Please log in again.', 'error');
         logout();
       } else {
-        showSnackbar('Failed to fetch profileeee data. Please try again.', 'error');
+        showSnackbar('Failed to fetch profile data. Please try again.', 'error');
       }
     } catch (error) {
       showSnackbar('An error occurred. Please try again later.', 'error');
