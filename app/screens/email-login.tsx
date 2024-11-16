@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LogoHeader } from '@/components/LogoHeader';
+import { useFirebase } from '@/components/contexts/FirebaseContext';
 
 import { fireDB } from '@/config/firebaseConfig';
 import firestore from '@react-native-firebase/firestore';
@@ -21,26 +22,8 @@ const EmailLogin = ({ showSnackbar, fcmToken }: EmailLoginProps) => {
   const [emailError, setEmailError] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { registerFCMToken } = useFirebase().firebaseState;
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
-
-  async function registerFcmToken(username: string) {    
-    if (fcmToken && username) {  
-      try {
-        const userDocRef = fireDB.collection('users').doc(username);
-  
-        await userDocRef.set(
-          {
-            fcmTokens: firestore.FieldValue.arrayUnion(fcmToken),
-          },
-          { merge: true }
-        );
-      } catch (error) {
-        console.error('Error adding FCM token to Firestore:', error);
-      }
-    } else {
-      console.error('Failed to get Firebase Cloud Messaging token or username not found.');
-    }
-  }
 
   const validateEmail = (email: string) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,7 +68,7 @@ const EmailLogin = ({ showSnackbar, fcmToken }: EmailLoginProps) => {
       }
 
       login({ token: data.token, user: data.user, google: false });
-      await registerFcmToken(data.user.username);
+      await registerFCMToken(data.user.username);
       setLoading(false);
     } catch (error: any) {
       showSnackbar(`An unexpected error occurred. Service may be down?`, 'error');
