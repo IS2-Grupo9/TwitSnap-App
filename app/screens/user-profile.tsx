@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { ActivityIndicator, Button, Card, Chip } from 'react-native-paper';
 import TopBar from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -299,6 +299,14 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
             >
               {followingUser ? "Unfollow" : "Follow"}
             </Button>
+            <View style={{ position: 'absolute', bottom: 0, right: 0 }}>
+              {(!user.private || followingUser) && (
+                <TouchableOpacity onPress={() => {}} style={styles.snapsButton}>
+                  <Ionicons name="document-text-outline" size={24} color="#65558F" />
+                  <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Snaps</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         )}
       </LinearGradient>
@@ -330,10 +338,11 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30, backgroundColor: 'white' },
   avatar: { width: 200, height: 200, borderRadius: 100, marginBottom: 20 },
-  avatarContainer: { alignItems: 'center' },
+  avatarContainer: { alignItems: 'center', height: '100%', justifyContent: 'center' },
   title: { fontSize: 32, fontWeight: 'bold', lineHeight: 32, color: '#65558F', textAlign: 'center' },
   subtitle: { fontSize: 16, fontWeight: 'bold', color: '#65558F', textAlign: 'center', marginTop: 10 },
   followButton: { marginTop: 20, paddingHorizontal: 20 },
+  snapsButton: { justifyContent: 'flex-end', alignItems: 'center', marginTop: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#65558F', marginTop: 20, textAlign: 'left' },
   chipContainer: { 
     flexDirection: 'row', 

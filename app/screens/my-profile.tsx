@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { ActivityIndicator, Button, Card, Chip, Switch } from 'react-native-paper';
 import TopBar from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User } from '@/components/types/models';
 import UsersView from '@/components/UsersView';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useFirebase } from '@/components/contexts/FirebaseContext';
 
 interface MyProfileScreenProps {
@@ -271,15 +271,25 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                 Followers: {followers.length}
               </Button>
             </View>
-            <Button
-              mode="contained"
-              onPress={() => setEditModalVisible(true)}
-              buttonColor='#65558F'
-              textColor='#FFFFFF'
-              style={styles.editButton}
-            >
-              Edit Profile
-            </Button>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', margin: 20, width: '100%' }}>
+              <TouchableOpacity onPress={() => {}} style={styles.moreButton}>
+                <Ionicons name="stats-chart-outline" size={24} color="#65558F" />
+                <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Stats</Text>
+              </TouchableOpacity>
+              <Button
+                mode="contained"
+                onPress={() => setEditModalVisible(true)}
+                buttonColor='#65558F'
+                textColor='#FFFFFF'
+                style={styles.editButton}
+              >
+                Edit Profile
+              </Button>    
+              <TouchableOpacity onPress={() => {}} style={styles.moreButton}>
+                <Ionicons name="document-text-outline" size={24} color="#65558F" />
+                <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Snaps</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </LinearGradient>
@@ -368,6 +378,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: 'bold', lineHeight: 32, color: '#65558F', textAlign: 'center' },
   subtitle: { fontSize: 16, fontWeight: 'bold', color: '#65558F', textAlign: 'center', marginTop: 10 },
   editButton: { marginTop: 20, paddingHorizontal: 20 },
+  moreButton: { marginTop: 20, alignItems: 'center' },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#65558F', marginTop: 20, textAlign: 'left' },
   chipContainer: { flexDirection: 'row', marginVertical: 10, maxHeight: 40 },
   chip: { backgroundColor: '#EADDFF', marginRight: 5, color: '#65558F' },
