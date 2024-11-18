@@ -257,12 +257,12 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           snapshot.docChanges().forEach(change => {
             if (change.type === 'modified' || change.type === 'added') {
               const chat = change.doc.data() as Chat;
-              if (!previousLastMessages[change.doc.id]) {
-                return;
+              let previousLastMessage;
+              if (!previousLastMessages[change.doc.id]) { 
+                previousLastMessage = null;
+              } else {
+                previousLastMessage = previousLastMessages[change.doc.id];
               }
-              const previousLastMessage = previousLastMessages[change.doc.id];
-              console.log('previousLastMessage', previousLastMessage);
-              console.log('chat.lastMessage', chat.lastMessage);
               if (!previousLastMessage || previousLastMessage.createdAt < chat.lastMessage?.createdAt) {
                 setPreviousLastMessages((prev) => ({
                   ...prev,
@@ -285,7 +285,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   
       return unsubscribe;
     }
-  }, []);
+  }, [auth.token]);
 
   const markAsRead = () => {
     setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
