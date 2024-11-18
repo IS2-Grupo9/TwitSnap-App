@@ -265,7 +265,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
                 <TouchableOpacity onPress={() => goToProfile(snap?.user)}>
                   <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
                 </TouchableOpacity>
-                <Text style={styles.username}>Author: {snap?.username || 'Unknown'}</Text>
+                <Text style={styles.username}>{snap?.username || 'Unknown'}</Text>
               </View>
               {snap?.is_private && 
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}>

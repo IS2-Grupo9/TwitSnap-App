@@ -23,15 +23,17 @@ interface FirebaseContextType {
   addNotification: (notification: Notification) => void;
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
-
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => {
+    return {
+      shouldShowAlert: false,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    };
+  },
+});
 
 export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { auth } = useAuth();
@@ -40,6 +42,30 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
   const [previousLastMessages, setPreviousLastMessages] = useState<{ [key: string]: Message }>({});
+
+  const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+
+  async function replaceUserIdWithUsername(userId: string) {
+    if (userId) {
+      try {
+        const response = await fetch(`${apiUrl}/users/users?ids=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.token}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
+        const user = await response.json();
+        return user[0]?.username || userId;
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        return userId;
+      }
+    }
+    return userId;
+  }
 
   async function registerForPushNotificationsAsync() {
     if (Device.isDevice) {
@@ -84,33 +110,78 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }
 
+  async function resolveMessage(data: any) {
+    let title = '';
+    let body = '';
+    let otherUser = '';
+    if (data.otherUserId) {
+      otherUser = await replaceUserIdWithUsername(data.otherUserId.toString());
+    }
+    switch (data.type) {
+      case 'mention':
+        title = 'You have been mentioned!';
+        body = otherUser + ' mentioned you in a Snap.';
+        break;
+      default:
+        title = 'New notification';
+        body = 'You have a new notification.';
+        break;
+    }
+    return [title, body];
+  }
+
   useEffect(() => {
     // Background messages
     messaging.setBackgroundMessageHandler(async remoteMessage => {
       console.log('Message handled in the background!', remoteMessage);
-      const notification : Notification = {
-        id: remoteMessage.messageId || '',
-        title: remoteMessage.notification?.title || '',
-        body: remoteMessage.notification?.body || '',
-        data: remoteMessage.data,
-        date: new Date(),
-        read: false,
-      };
-      addNotification(notification);      
+      if (remoteMessage.ttl !== 0) {
+        if (remoteMessage.data?.user && remoteMessage.data?.user === auth.user?.username) {
+          console.log('Message handled in the background!', remoteMessage);
+          const [title, body] = await resolveMessage(remoteMessage.data);
+          const notification : Notification = {
+            id: remoteMessage.messageId || '',
+            title: title,
+            body: body,
+            data: remoteMessage.data,
+            date: new Date(),
+            read: false,
+          };
+          // Schedule a notification
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: notification.title,
+              body: notification.body,
+              data: notification.data,
+            },
+            trigger: null,
+          });
+          addNotification(notification);
+        }
+    }
     });
     // Foreground messages
-    messaging.onMessage(async remoteMessage => {
-      const notification : Notification = {
-        id: remoteMessage.messageId || '',
-        title: remoteMessage.notification?.title || '',
-        body: remoteMessage.notification?.body || '',
-        data: remoteMessage.data,
-        date: new Date(),
-        read: false,
-      };
-      addNotification(notification);
-    });
-  }, []);
+    const unsubscribeForeground = messaging.onMessage(async remoteMessage => {
+      if (remoteMessage.ttl !== 0) {
+        if (remoteMessage.data?.user && remoteMessage.data?.user === auth.user?.username) {
+          console.log('Message handled in the foreground!', remoteMessage);
+          const [title, body] = await resolveMessage(remoteMessage.data);
+          const notification : Notification = {
+            id: remoteMessage.messageId || '',
+            title: title,
+            body: body,
+            data: remoteMessage.data,
+            date: new Date(),
+            read: false,
+          };
+          addNotification(notification);
+        }
+      }
+      });
+
+    return () => {
+      unsubscribeForeground();
+    };
+  }, [auth.user?.username]);
 
   useEffect(() => {
     const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
@@ -190,6 +261,8 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
                 return;
               }
               const previousLastMessage = previousLastMessages[change.doc.id];
+              console.log('previousLastMessage', previousLastMessage);
+              console.log('chat.lastMessage', chat.lastMessage);
               if (!previousLastMessage || previousLastMessage.createdAt < chat.lastMessage?.createdAt) {
                 setPreviousLastMessages((prev) => ({
                   ...prev,
@@ -212,7 +285,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   
       return unsubscribe;
     }
-  }, [auth.token]);
+  }, []);
 
   const markAsRead = () => {
     setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
