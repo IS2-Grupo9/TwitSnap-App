@@ -58,7 +58,7 @@ const NotificationListScreen: React.FC = () => {
         <Text style={styles.noNotificationsText}>No notifications found.</Text>
       ) : (
         <FlatList
-          data={notifications}
+          data={notifications.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
           keyExtractor={(item, index) => `${item.data.post_id || item.data.chat_id}-${index}`}
           renderItem={({ item }) => (
             <TouchableOpacity
