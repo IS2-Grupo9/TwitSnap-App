@@ -389,9 +389,20 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
     if (!hasMore || loading) return;
     setLoading(true);
     const newOffset = offset + limit;
-    const moreSnaps = await fetchSnaps(newOffset);
-  
+    const moreSnaps : ExtendedSnap[] = await fetchSnaps(newOffset);
     if (moreSnaps) {
+      const userIds = moreSnaps.map(snap => snap.user);
+      const userShareIds = moreSnaps.filter(snap => snap.is_share).map(snap => snap.user_share).filter((id): id is string => id !== undefined);
+      if (userShareIds.length > 0) {
+        userIds.push(...userShareIds);
+      }
+      const userDict = await fetchUsersById(userIds);
+      moreSnaps.forEach(snap => {
+        snap.username = userDict[snap.user] || 'Unknown';
+        if (snap.is_share && snap.user_share) {
+          snap.shared_username = userDict[snap.user_share] || 'Unknown';
+        }
+      });
       setSnaps([...snaps, ...moreSnaps]);
       setOffset(newOffset);
     }
