@@ -229,6 +229,10 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
               <Text style={styles.defaultRangeText}>Last year</Text>
             </TouchableOpacity>
           </View>
+          <View style={styles.statsContainer}>
+            <Text style={styles.statText}>Likes: {snapsInfo.reduce((acc, snap) => acc + snap.like_counter, 0)}</Text>
+            <Text style={styles.statText}>Shares: {snapsInfo.reduce((acc, snap) => acc + snap.share_counter, 0)}</Text>
+          </View>
           <View style={styles.graphContainer}>
             <Text style={styles.graphTitle}>Likes</Text>
             <CartesianChart
