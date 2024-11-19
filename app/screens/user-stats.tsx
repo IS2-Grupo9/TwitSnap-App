@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useGlobalSearchParams } from 'expo-router';
 import { DatePickerModal, enGB, registerTranslation } from 'react-native-paper-dates';
 import TopBar from '@/components/TopBar';
+import { CartesianChart, Line } from "victory-native";
 import { SnapStats } from '@/components/types/models';
 registerTranslation('en-GB', enGB);
 
@@ -23,7 +24,6 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [snapsCount, setSnapsCount] = useState(0);
-
 
   const [snapsInfo, setSnapsInfo] = useState<SnapStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,13 +90,10 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
     setRange({ startDate: getDefaultDate(days), endDate: new Date() });
   };
 
-  const timelineData = snapsInfo.map((stat) => {
-    return {
-      date: new Date(stat.date),
-      likes: stat.like_counter,
-      shares: stat.share_counter,
-    };
-  });
+  const DATA = Array.from({ length: 31 }, (_, i) => ({
+    day: i,
+    highTmp: 40 + 30 * Math.random(),
+  }));
 
   return (
     <>
@@ -113,7 +110,7 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
             <Text style={styles.rangeButtonText}>Pick range</Text>
           </TouchableOpacity>
           <DatePickerModal
-            locale="en"
+            locale="en-GB"
             mode="range"
             visible={open}
             onDismiss={onDismiss}
@@ -140,7 +137,19 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
           {loading ? (
             <ActivityIndicator size="large" color="#4CAF50" />
           ) : (
-            <Text>Graph goes here</Text>
+            <CartesianChart
+              data={DATA}
+              xKey="day"
+              yKeys={['highTmp']}
+            >
+              {({ points }) => (
+                <Line
+                  points={points.highTmp}
+                  color="#4CAF50"
+                  strokeWidth={3}
+                />
+              )}
+            </CartesianChart>
           )}
         </View>
       </ScrollView>
