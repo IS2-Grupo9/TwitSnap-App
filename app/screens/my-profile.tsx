@@ -243,7 +243,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
               )}
             </View>
             <Text style={styles.subtitle}>{user.email}</Text>
-            <Text style={styles.subtitle}>Location: {user.location}</Text>
+            <Text style={styles.subtitle}>Location: {user.location || 'Not specified'}</Text>
             <Text style={styles.subtitle}>Join date: {formatDate(user.createdAt)}</Text>
             <Text style={styles.subtitle}>Last updated: {formatDate(user.updatedAt)}</Text>
             {user.interests && (
