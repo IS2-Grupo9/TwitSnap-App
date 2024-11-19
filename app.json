@@ -18,10 +18,6 @@
     "android": {
       "package": "com.is2grupo9.twitsnap",
       "googleServicesFile": "./google-services.json",
-      "useNextNotificationsApi": true,
-      "notification": {
-        "defaults": []
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
