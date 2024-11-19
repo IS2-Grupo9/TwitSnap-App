@@ -2,15 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useGlobalSearchParams } from 'expo-router';
 import { DatePickerModal, enGB, registerTranslation } from 'react-native-paper-dates';
-import * as echarts from 'echarts/core';
-import { LineChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, TitleComponent } from 'echarts/components';
-import { SVGRenderer, SvgChart } from '@wuba/react-native-echarts';
-import { SnapStats } from '@/components/types/models';
 import TopBar from '@/components/TopBar';
+import { SnapStats } from '@/components/types/models';
 registerTranslation('en-GB', enGB);
-
-echarts.use([SVGRenderer, LineChart, GridComponent, TooltipComponent, TitleComponent]);
 
 interface UserStatsProps {
   showSnackbar: (message: string, type: string) => void;
@@ -30,8 +24,6 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
   const [followingCount, setFollowingCount] = useState(0);
   const [snapsCount, setSnapsCount] = useState(0);
 
-  const svgRefLikes = useRef<any>(null);
-  const skiaRefShares = useRef<any>(null);
 
   const [snapsInfo, setSnapsInfo] = useState<SnapStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +52,7 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
       });
       if (response.ok) {
         const data = await response.json();
-        setFollowerCount(data.follower_counter);
+        setFollowerCount(data.data.follower_counter);
       }
     } catch (error) {
       console.error(error);
@@ -93,33 +85,6 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
     fetchUserSnapsStats();
     setLoading(false);
   }, [range]);
-
-  useEffect(() => {
-    const optionLikes = {
-      xAxis: {
-        type: 'time',
-      },
-      yAxis: {
-        type: 'value',
-      },
-      series: [
-        {
-          type: 'line',
-          data: snapsInfo.map((stat) => [new Date(stat.date), stat.like_counter]),
-        },
-      ],
-    };
-    let chartLikes: any;
-    if (svgRefLikes.current) {
-      chartLikes = echarts.init(svgRefLikes.current, 'light', {
-        renderer: 'svg',
-        width: 400,
-        height: 400,
-      });
-      chartLikes.setOption(optionLikes);
-    }
-    return () => chartLikes?.dispose();
-  }, []);
 
   const applyDefaultRange = (days: number) => {
     setRange({ startDate: getDefaultDate(days), endDate: new Date() });
@@ -175,7 +140,7 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
           {loading ? (
             <ActivityIndicator size="large" color="#4CAF50" />
           ) : (
-            <SvgChart ref={svgRefLikes} />
+            <Text>Graph goes here</Text>
           )}
         </View>
       </ScrollView>
