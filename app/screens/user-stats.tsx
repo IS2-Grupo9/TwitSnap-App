@@ -84,7 +84,6 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
       if (response.ok) {
         const data = await response.json();
         setSnapsInfo(data.data);
-        console.log(data.data);
       }
     } catch (error) {
       console.error(error);
