@@ -15,13 +15,15 @@ interface SnapScreenProps {
 
 export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
   const { auth, logout } = useAuth();
-  const { snapId } = useGlobalSearchParams<{ snapId: string }>();
+  const { snapId, creatorId } = useGlobalSearchParams<{ snapId: string, creatorId: string }>();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
   const postApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
   const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
+  const statsApiUrl = process.env.EXPO_PUBLIC_STATISTICS_URL;
 
   const [snap, setSnap] = useState<ExtendedSnap | null>(null);
   const [likeCount, setLikeCount] = useState<number | null>(null);
+  const [shareCount, setShareCount] = useState<number | null>(null);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editedSnap, setEditedSnap] = useState<ExtendedSnap | null>(null);
@@ -195,9 +197,9 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
     }
   }
 
-  const fetchLikeCount = async () => {
+  const fetchStats = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/posts/${snapId}/likes?requester_id=${auth.user?.id}`, {
+      const response = await fetch(`${statsApiUrl}/statistics/posts/${snapId}/creator/${creatorId}/viewer/${auth.user?.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +209,8 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
         return;
       }
       const likes = await response.json();
-      setLikeCount(likes.data.like_count);
+      setLikeCount(likes.data.like_counter);
+      setShareCount(likes.data.share_counter);
     } catch (error) {
       showSnackbar('Failed to fetch like count.', 'error');
     }
@@ -234,7 +237,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
       snap.shared = await fetchShared();
       snap.editable = snap.user.toString() === auth.user?.id.toString();
       setSnap(snap);
-      fetchLikeCount();
+      fetchStats();
       setLoading(false);
     } catch (error) {
       showSnackbar('Failed to fetch snap.', 'error');
@@ -300,7 +303,8 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
                 size={30}
                 color="#65558F"
                 onPress={() => handleShareSnap(snap?.id, snap?.user, snap?.shared)}
-              />     
+              />
+              <Text style={styles.likesCount}>{shareCount ? `${shareCount} share` + (shareCount > 1 ? 's' : '') : ''}</Text>
               {snap?.editable && (
                 <View style={styles.editIcons}>
                   <Ionicons

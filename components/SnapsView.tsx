@@ -113,10 +113,10 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
     setDeleteModalVisible(true);
   };
 
-  const handleInfo = (snapId: number) => {
+  const handleInfo = (snapId: number, creatorId: any) => {
     router.push({
       pathname: '/screens/snap',
-      params: { snapId: snapId.toString() },
+      params: { snapId: snapId.toString(), creatorId: creatorId.toString() },
     });
   };
 
@@ -513,7 +513,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
                     size={30}
                     color="#65558F"
                     style={styles.iconButton}
-                    onPress={() => handleInfo(snap.id)}
+                    onPress={() => handleInfo(snap.id, snap.user)}
                   />
                 </Card.Actions>
               </Card>
