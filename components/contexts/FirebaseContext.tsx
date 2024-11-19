@@ -44,6 +44,7 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [previousLastMessages, setPreviousLastMessages] = useState<{ [key: string]: Message }>({});
 
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+  const apiInteractions = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
 
   async function replaceUserIdWithUsername(userId: string) {
     if (userId) {
@@ -130,12 +131,39 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     return [title, body];
   }
 
+  const discardNotification = async (data: any) => {
+    if (data.otherUserId) {
+      try {
+        const response = await fetch(`${apiInteractions}/interactions/users/${auth.user?.id}/follows`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        if (response.ok) {
+          const follows = (await response.json()).data;
+          const isFollowing = follows.some((follow: any) => follow.followed_id === data.otherUserId);
+          return !isFollowing;          
+        } else {
+          return true;
+        }
+      } catch (error) {
+        return true;
+      }
+    } else {
+      return false;
+    }
+  }
+
   useEffect(() => {
     // Background messages
     messaging.setBackgroundMessageHandler(async remoteMessage => {
       console.log('Message handled in the background!', remoteMessage);
       if (remoteMessage.ttl !== 0) {
         if (remoteMessage.data?.user && remoteMessage.data?.user === auth.user?.username) {
+          if (await discardNotification(remoteMessage.data)) {
+            return;
+          }            
           console.log('Message handled in the background!', remoteMessage);
           const [title, body] = await resolveMessage(remoteMessage.data);
           const notification : Notification = {
@@ -163,6 +191,9 @@ export const FirebaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     const unsubscribeForeground = messaging.onMessage(async remoteMessage => {
       if (remoteMessage.ttl !== 0) {
         if (remoteMessage.data?.user && remoteMessage.data?.user === auth.user?.username) {
+          if (await discardNotification(remoteMessage.data)) {
+            return;
+          }
           console.log('Message handled in the foreground!', remoteMessage);
           const [title, body] = await resolveMessage(remoteMessage.data);
           const notification : Notification = {
