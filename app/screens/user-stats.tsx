@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TextInput, Button, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useGlobalSearchParams } from 'expo-router';
-import { LineChart } from 'react-native-chart-kit';
+import { DatePickerModal, enGB, registerTranslation } from 'react-native-paper-dates';
+import * as echarts from 'echarts/core';
+import { LineChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent, TitleComponent } from 'echarts/components';
+import { SVGRenderer, SvgChart } from '@wuba/react-native-echarts';
 import { SnapStats } from '@/components/types/models';
 import TopBar from '@/components/TopBar';
+registerTranslation('en-GB', enGB);
+
+echarts.use([SVGRenderer, LineChart, GridComponent, TooltipComponent, TitleComponent]);
 
 interface UserStatsProps {
   showSnackbar: (message: string, type: string) => void;
 }
 
-const getDefaultDate = (days: number): string => {
+const getDefaultDate = (days: number): Date => {
   const date = new Date();
   date.setDate(date.getDate() - days);
-  return date.toISOString().split('T')[0];
+  return date;
 };
 
 export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
@@ -21,13 +28,27 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
 
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [snapCount, setSnapCount] = useState(0);
+  const [snapsCount, setSnapsCount] = useState(0);
+
+  const svgRefLikes = useRef<any>(null);
+  const skiaRefShares = useRef<any>(null);
 
   const [snapsInfo, setSnapsInfo] = useState<SnapStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<{ startDate: Date; endDate: Date }>({ startDate: getDefaultDate(7), endDate: new Date() });
+  const [open, setOpen] = useState(false);
 
-  const [dateFilterFrom, setDateFilterFrom] = useState('');
-  const [dateFilterTo, setDateFilterTo] = useState('');
+  const onDismiss = useCallback(() => {
+    setOpen(false);
+  }, [setOpen]);
+
+  const onConfirm = useCallback(
+    ({ startDate, endDate }: { startDate: any; endDate: any }) => {
+      setOpen(false);
+      setRange({ startDate, endDate });
+    },
+    [setOpen, setRange]
+  );
 
   const fetchUserStats = async () => {
     try {
@@ -47,7 +68,8 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
   };
 
   const fetchUserSnapsStats = async () => {
-    const dateRange = dateFilterFrom && dateFilterTo ? `?from=${dateFilterFrom}&to=${dateFilterTo}` : '';
+    const dateRange = range.startDate && range.endDate &&
+      `?from=${range.startDate.toISOString().split('T')[0]}&to=${range.endDate.toISOString().split('T')[0]}` || '';
     try {
       const response = await fetch(`${apiStatsUrl}/statistics/user/${userId}/posts${dateRange}`, {
         method: 'GET',
@@ -58,6 +80,7 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
       if (response.ok) {
         const data = await response.json();
         setSnapsInfo(data.data);
+        console.log(data.data);
       }
     } catch (error) {
       console.error(error);
@@ -69,186 +92,140 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
     fetchUserStats();
     fetchUserSnapsStats();
     setLoading(false);
-  }, [dateFilterFrom, dateFilterTo]);
+  }, [range]);
 
-  const timelineData = (key: 'like_counter' | 'share_counter') =>
-    snapsInfo.map((snap) => ({
-      x: new Date(snap.date).toISOString().split('T')[0],
-      y: snap[key],
-    }));
+  useEffect(() => {
+    const optionLikes = {
+      xAxis: {
+        type: 'time',
+      },
+      yAxis: {
+        type: 'value',
+      },
+      series: [
+        {
+          type: 'line',
+          data: snapsInfo.map((stat) => [new Date(stat.date), stat.like_counter]),
+        },
+      ],
+    };
+    let chartLikes: any;
+    if (svgRefLikes.current) {
+      chartLikes = echarts.init(svgRefLikes.current, 'light', {
+        renderer: 'svg',
+        width: 400,
+        height: 400,
+      });
+      chartLikes.setOption(optionLikes);
+    }
+    return () => chartLikes?.dispose();
+  }, []);
 
   const applyDefaultRange = (days: number) => {
-    setDateFilterFrom(getDefaultDate(days));
-    setDateFilterTo(new Date().toISOString().split('T')[0]);
+    setRange({ startDate: getDefaultDate(days), endDate: new Date() });
   };
 
+  const timelineData = snapsInfo.map((stat) => {
+    return {
+      date: new Date(stat.date),
+      likes: stat.like_counter,
+      shares: stat.share_counter,
+    };
+  });
+
   return (
-    <ScrollView style={styles.container}>
+    <>
       <TopBar type="back" showNotifications={true} />
+      <ScrollView style={styles.container}>
+        <View style={styles.statsContainer}>
+          <Text style={styles.statText}>Followers: {followerCount}</Text>
+          <Text style={styles.statText}>Following: {followingCount}</Text>
+          <Text style={styles.statText}>Snaps: {snapsCount}</Text>
+        </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color={styles.primaryColor.color} />
-      ) : (
-        <>
-          <View style={styles.statsContainer}>
-            <Text style={styles.statText}>Followers: {followerCount}</Text>
-            <Text style={styles.statText}>Following: {followingCount}</Text>
-            <Text style={styles.statText}>Snaps: {snapCount}</Text>
-          </View>
+        <View style={styles.dateFilterContainer}>
+          <TouchableOpacity onPress={() => setOpen(true)} style={styles.rangeButton}>
+            <Text style={styles.rangeButtonText}>Pick range</Text>
+          </TouchableOpacity>
+          <DatePickerModal
+            locale="en"
+            mode="range"
+            visible={open}
+            onDismiss={onDismiss}
+            startDate={range.startDate}
+            endDate={range.endDate}
+            onConfirm={onConfirm}
+          />
+        </View>
 
-          <View style={styles.dateFilterContainer}>
-            <TextInput
-              style={styles.dateInput}
-              placeholder="From (YYYY-MM-DD)"
-              value={dateFilterFrom}
-              onChangeText={setDateFilterFrom}
-            />
-            <TextInput
-              style={styles.dateInput}
-              placeholder="To (YYYY-MM-DD)"
-              value={dateFilterTo}
-              onChangeText={setDateFilterTo}
-            />
-            <Button title="Apply Filter" onPress={fetchUserSnapsStats} />
-          </View>
+        <View style={styles.defaultRangeContainer}>
+          <TouchableOpacity onPress={() => applyDefaultRange(7)} style={styles.rangeButton}>
+            <Text style={styles.rangeButtonText}>Last 7 days</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => applyDefaultRange(30)} style={styles.rangeButton}>
+            <Text style={styles.rangeButtonText}>Last 30 days</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => applyDefaultRange(365)} style={styles.rangeButton}>
+            <Text style={styles.rangeButtonText}>Last year</Text>
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.defaultRangeContainer}>
-            <TouchableOpacity
-              style={styles.rangeButton}
-              onPress={() => applyDefaultRange(7)}
-            >
-              <Text style={styles.rangeButtonText}>Last 7 Days</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.rangeButton}
-              onPress={() => applyDefaultRange(30)}
-            >
-              <Text style={styles.rangeButtonText}>Last Month</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.rangeButton}
-              onPress={() => applyDefaultRange(365)}
-            >
-              <Text style={styles.rangeButtonText}>Last Year</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.graphContainer}>
-            <Text style={styles.graphTitle}>Timeline of Likes</Text>
-            <LineChart
-              data={{
-                labels: timelineData('like_counter').map((data) => data.x),
-                datasets: [
-                  {
-                    data: timelineData('like_counter').map((data) => data.y),
-                  },
-                ],
-              }}
-              width={350}
-              height={220}
-              chartConfig={{
-                backgroundColor: '#FFFFFF',
-                backgroundGradientFrom: '#f7f7f7',
-                backgroundGradientTo: '#f7f7f7',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(51, 102, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                style: {
-                  borderRadius: 16,
-                },
-              }}
-              bezier
-            />
-          </View>
-
-          <View style={styles.graphContainer}>
-            <Text style={styles.graphTitle}>Timeline of Shares</Text>
-            <LineChart
-              data={{
-                labels: timelineData('share_counter').map((data) => data.x),
-                datasets: [
-                  {
-                    data: timelineData('share_counter').map((data) => data.y),
-                  },
-                ],
-              }}
-              width={350}
-              height={220}
-              chartConfig={{
-                backgroundColor: '#FFFFFF',
-                backgroundGradientFrom: '#f7f7f7',
-                backgroundGradientTo: '#f7f7f7',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                style: {
-                  borderRadius: 16,
-                },
-              }}
-              bezier
-            />
-          </View>
-        </>
-      )}
-    </ScrollView>
+        <View style={styles.graphContainer}>
+          <Text style={styles.graphTitle}>Timeline of Likes</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#4CAF50" />
+          ) : (
+            <SvgChart ref={svgRefLikes} />
+          )}
+        </View>
+      </ScrollView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    padding: 16,
+    backgroundColor: '#f7f7f7',
   },
   statsContainer: {
-    padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    margin: 16,
+    marginBottom: 20,
   },
   statText: {
-    fontSize: 16,
-    color: '#65558F',
-    marginVertical: 4,
-  },
-  dateFilterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    marginVertical: 16,
-  },
-  dateInput: {
-    borderColor: '#6c757d',
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 8,
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  defaultRangeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 16,
-  },
-  rangeButton: {
-    backgroundColor: '#65558F',
-    padding: 10,
-    borderRadius: 8,
-  },
-  rangeButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  graphContainer: {
-    margin: 16,
-    padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-  },
-  graphTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#65558F',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  dateFilterContainer: {
+    marginBottom: 20,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    marginBottom: 10,
+  },
+  rangeButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  rangeButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  defaultRangeContainer: {
+    marginBottom: 20,
+  },
+  graphContainer: {
+    marginBottom: 20,
+  },
+  graphTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   primaryColor: {
     color: '#65558F',
