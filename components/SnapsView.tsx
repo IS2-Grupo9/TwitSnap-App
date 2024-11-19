@@ -314,7 +314,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
 
   const fetchProfileSnaps = async () => {
     try {
-      const response = await fetch(`${postsApiUrl}/users/${userId}/feed`, {
+      const response = await fetch(`${postsApiUrl}/users/owner/${userId}/viewer/${auth.user?.id}/feed`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
