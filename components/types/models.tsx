@@ -17,6 +17,14 @@ export interface ExtendedSnap extends Snap {
     shared_username?: string;
 }
 
+export interface SnapStats {
+    post_id: string,
+    like_counter: number,
+    share_counter: number,
+    comment_counter: number,
+    date: string,
+}
+
 export interface User {
     id: number;
     username: string;
