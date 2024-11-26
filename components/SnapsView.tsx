@@ -9,6 +9,7 @@ import { ExtendedSnap, User } from '@/components/types/models';
 import CreateSnapModal from './modals/CreateSnapModal';
 import EditSnapModal from './modals/EditSnapModal';
 import DeleteSnapModal from './modals/DeleteSnapModal';
+import ShareSnapModal from './modals/ShareSnapModal';
 
 interface SnapsViewProps {
   showSnackbar: (message: string, type: string) => void;
@@ -41,6 +42,9 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
 
   const [snapToDelete, setSnapToDelete] = useState<number | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [snapToShare, setSnapToShare] = useState<ExtendedSnap | null>(null);
 
   const [likedSnaps, setLikedSnaps] = useState<number[]>([]);
   const [sharedSnaps, setSharedSnaps] = useState<number[]>([]);
@@ -519,6 +523,17 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
                     onPress={() => handleShareSnap(snap.id, snap.user, snap.shared)}
                   />
                   <View style={{width: 5}} />
+                  <MaterialIcons
+                    name="share"
+                    size={30}
+                    color="#65558F"
+                    style={styles.iconButton}
+                    onPress={() => {
+                      setSnapToShare(snap);
+                      setShareModalVisible(true);
+                    }}
+                  />
+                  <View style={{width: 5}} />
                   <Ionicons
                     name="information-circle-outline"
                     size={30}
@@ -569,6 +584,12 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
         snapToDelete={snapToDelete}
         setSnapToDelete={setSnapToDelete}
         loadSnaps={loadSnaps}
+      />
+      <ShareSnapModal
+        showSnackbar={showSnackbar}
+        shareModalVisible={shareModalVisible}
+        setShareModalVisible={setShareModalVisible}
+        snapToShare={snapToShare}        
       />
     </View>
   );
