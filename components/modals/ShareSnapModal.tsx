@@ -24,7 +24,7 @@ export default function ShareSnapModal({
         try {
           if (snapToShare === null) return;
           const message = encodeURIComponent(
-            `Shared from TwitSnap: \n${snapToShare.username} posted: ${snapToShare.message}`
+            `Shared from TwitSnap: \n${snapToShare.username} posted: "${snapToShare.message}"`
           );
           let url = '';
           if (social === 'whatsapp') {
