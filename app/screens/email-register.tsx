@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { TextInput, Button, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoHeader } from '@/components/LogoHeader';
@@ -58,8 +58,8 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
       });
 
       if (response.ok) {
-        showSnackbar('Account created successfully. Please log in.', 'success');
-        router.push('./login');
+        showSnackbar('Account created, please check your email for a PIN.', 'success');
+        router.push('./email-register-pin');
       } else {
         const errorData = await response.json();
         showSnackbar(`An error occurred: ${errorData.message || 'Please try again.'}`, 'error');
@@ -183,6 +183,9 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
             Sign Up
           </Button>
         )}
+        <TouchableOpacity onPress={() => router.push('./email-register-pin')}>
+          <Text style={styles.text}>Received a PIN? Complete registration here.</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -194,6 +197,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, textAlign: 'center', color: 'black', marginBottom: 10 },
   input: { marginVertical: 10, backgroundColor: 'transparent' },
   button: { marginVertical: 20, marginHorizontal: 40 },
+  text: { textAlign: 'center', color: '#65558F', marginTop: 20 },
   errorText: { color: 'red', marginBottom: 10, textAlign: 'center' },
 });
 
