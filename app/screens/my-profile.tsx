@@ -286,7 +286,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                 Followers: {followers.length}
               </Button>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', margin: 20, width: '100%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', margin: 20, width: '100%', position: 'absolute', bottom: 0}}>
               <TouchableOpacity onPress={() => goToUserStats(user.id)} style={styles.moreButton}>
                 <Ionicons name="stats-chart-outline" size={24} color="#65558F" />
                 <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Stats</Text>
@@ -389,7 +389,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30, backgroundColor: 'white' },
   avatar: { width: 200, height: 200, borderRadius: 100, marginBottom: 20 },
-  avatarContainer: { alignItems: 'center' },
+  avatarContainer: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   title: { fontSize: 32, fontWeight: 'bold', lineHeight: 32, color: '#65558F', textAlign: 'center' },
   subtitle: { fontSize: 16, fontWeight: 'bold', color: '#65558F', textAlign: 'center', marginTop: 10 },
   editButton: { marginTop: 20, paddingHorizontal: 20 },
