@@ -6,7 +6,11 @@ import { router } from 'expo-router';
 import { useAuth } from '@/components/contexts/AuthContext';
 import TopBar from '@/components/TopBar';
 
-const NotificationListScreen: React.FC = () => {
+interface NotificationListProps {
+  showSnackbar: (message: string, type: string) => void;
+}
+
+export default function NotificationListScreen({ showSnackbar }: NotificationListProps) {
   const { auth } = useAuth();
   const { notifications, markAsRead, chats } = useFirebase().firebaseState;
 
@@ -53,7 +57,7 @@ const NotificationListScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <TopBar type="back" showNotifications={false} />
+      <TopBar showSnackbar={showSnackbar} type="back" showNotifications={false} />
       {notifications.length === 0 ? (
         <Text style={styles.noNotificationsText}>No notifications found.</Text>
       ) : (
@@ -100,4 +104,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NotificationListScreen;

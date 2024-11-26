@@ -75,13 +75,13 @@ const RootLayout: React.FC = () => {
                 {() => <UserProfileScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/chat">
-                {() => <ChatScreen />}
+                {() => <ChatScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/snap">
                 {() => <SnapScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/notifications">
-                {() => <NotificationListScreen />}
+                {() => <NotificationListScreen showSnackbar={showSnackbar} />}
               </RootStack.Screen>
               <RootStack.Screen name="screens/profile-feed">
                 {() => <ProfileFeedScreen showSnackbar={showSnackbar} />}

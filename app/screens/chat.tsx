@@ -7,7 +7,11 @@ import TopBar from '@/components/TopBar';
 import { useGlobalSearchParams } from 'expo-router';
 import { ActivityIndicator } from 'react-native-paper';
 
-export default function ChatScreen() {
+interface ChatScreenProps {
+  showSnackbar: (message: string, type: string) => void;
+}
+
+export default function ChatScreen({ showSnackbar }: ChatScreenProps) {
   const { chatId } = useGlobalSearchParams<{ chatId: string }>();
   const { auth } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -83,7 +87,7 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <TopBar type="back" showNotifications={true} />
+      <TopBar showSnackbar={showSnackbar} type="back" showNotifications={true} />
       <View style={styles.chatContainer}>
         {loading ? (
           <ActivityIndicator size="large" color="#65558F" style={styles.loading} />

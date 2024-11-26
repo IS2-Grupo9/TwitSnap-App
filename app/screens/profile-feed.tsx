@@ -12,7 +12,7 @@ export default function ProfileFeedScreen({ showSnackbar }: ProfileFeedProps) {
 
   return (
     <>
-        <TopBar type='back' showNotifications={true} />
+        <TopBar showSnackbar={showSnackbar} type='back' showNotifications={true} />
         <SnapsView
           showSnackbar={showSnackbar}
           feed={true}

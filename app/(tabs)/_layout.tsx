@@ -23,7 +23,7 @@ export default function TabLayout({ showSnackbar }: TabLayoutProps) {
 
   return (
     <>
-      <TopBar type="default" showNotifications={true} />
+      <TopBar showSnackbar={showSnackbar} type="default" showNotifications={true} />
       <Tab.Navigator
         initialRouteName="home"
         backBehavior='history'

@@ -229,7 +229,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
 
   return (
     <>
-      <TopBar type='back' showNotifications={true} />
+      <TopBar showSnackbar={showSnackbar} type='back' showNotifications={true} />
       <LinearGradient colors={['#EADDFF', '#FFFFFF']} style={styles.container}>
         {loadingProfile ? (
           <ActivityIndicator size="large" color="#65558F" />

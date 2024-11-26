@@ -250,7 +250,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
   
   return (
     <>
-      <TopBar type="back" showNotifications />
+      <TopBar showSnackbar={showSnackbar} type="back" showNotifications />
       <View style={styles.container}>
         {loading ? (
           <ActivityIndicator size="large" color="#65558F" />

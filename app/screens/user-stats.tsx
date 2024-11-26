@@ -184,7 +184,7 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
 
   return (
     <>
-      <TopBar type="back" showNotifications={true} />
+      <TopBar showSnackbar={showSnackbar} type="back" showNotifications={true} />
       <View style={styles.container}>
       {loading ? ( 
         <ActivityIndicator size="large" color="#65558F" />
