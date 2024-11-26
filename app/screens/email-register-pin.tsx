@@ -78,7 +78,7 @@ const EmailRegisterPIN = ({ showSnackbar }: EmailRegisterPINProps) => {
         {loading ? (
           <ActivityIndicator size="large" color="#65558F" />
         ) : (
-          <Button onPress={handleRegisterPIN}
+          <Button onPress={() => {}}
             mode="contained"
             buttonColor='#65558F'
             textColor='#FFFFFF'
