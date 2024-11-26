@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Text, Image } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Text, Image, Share } from 'react-native';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { router, useGlobalSearchParams } from 'expo-router';
 import { ExtendedSnap } from '@/components/types/models';
@@ -8,6 +8,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import EditSnapModal from '@/components/modals/EditSnapModal';
 import DeleteSnapModal from '@/components/modals/DeleteSnapModal';
 import TopBar from '@/components/TopBar';
+import ShareSnapModal from '@/components/modals/ShareSnapModal';
 
 interface SnapScreenProps {
   showSnackbar: (message: string, type: string) => void;
@@ -31,6 +32,8 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
 
   const [snapToDelete, setSnapToDelete] = useState<number | null>(null);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -292,31 +295,40 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
             <View style={styles.iconContainer}>
               <Ionicons
                 name={snap?.liked ? 'heart' : 'heart-outline'}
-                size={30}
+                size={25}
                 color="#65558F"
                 onPress={() => handleLikeSnap(snap?.id, snap?.liked)}
               />
               <Text style={styles.likesCount}>{likeCount ? `${likeCount} like` + (likeCount > 1 ? 's' : '') : ''}</Text>
-              <View style={{ width: 20 }} />
+              <View style={{ width: 10 }} />
               <MaterialIcons
                 name={snap?.shared ? 'repeat-on' : 'repeat'}
-                size={30}
+                size={25}
                 color="#65558F"
                 onPress={() => handleShareSnap(snap?.id, snap?.user, snap?.shared)}
               />
               <Text style={styles.likesCount}>{shareCount ? `${shareCount} share` + (shareCount > 1 ? 's' : '') : ''}</Text>
+              <View style={{ width: 10 }} />
+              <MaterialIcons
+                name="share"
+                size={25}
+                color="#65558F"
+                onPress={() => {
+                  setShareModalVisible(true);                  
+                }}
+              />
               {snap?.editable && (
                 <View style={styles.editIcons}>
                   <Ionicons
                     name="pencil-outline"
-                    size={24}
+                    size={20}
                     color="#65558F"
                     onPress={() => handleEditSnap(snap)}
                   />
                   <View style={{ width: 15 }} />
                   <Ionicons
                     name="trash-outline"
-                    size={24}
+                    size={20}
                     color="#65558F"
                     onPress={() => handleDeleteSnap(snap.id)}
                   />
@@ -335,7 +347,6 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
           setEditedSnapMessage={setEditedSnapMessage}
           loadSnaps={loadSnap}
         />
-
         <DeleteSnapModal
           showSnackbar={showSnackbar}
           deleteModalVisible={deleteModalVisible}
@@ -343,6 +354,12 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
           snapToDelete={snapToDelete}
           setSnapToDelete={setSnapToDelete}
           loadSnaps={loadSnap}
+        />
+        <ShareSnapModal
+          showSnackbar={showSnackbar}
+          shareModalVisible={shareModalVisible}
+          setShareModalVisible={setShareModalVisible}
+          snapToShare={snap}
         />
       </View>
     </>
@@ -405,13 +422,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginTop: 10,
     marginBottom: 10,
-    minHeight: '30%',
-    justifyContent: 'center',
   },
   message: {
     fontSize: 16,
     color: 'black',
-    textAlign: 'center',
+    textAlignVertical: 'top',
   },
   iconContainer: {
     flexDirection: 'row',
@@ -420,7 +435,7 @@ const styles = StyleSheet.create({
   },
   likesCount: {
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 14,
     color: '#555',
   },
   sharedContainer: {
