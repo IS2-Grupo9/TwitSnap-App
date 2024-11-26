@@ -32,16 +32,8 @@ export default function ShareSnapModal({
           } else if (social === 'twitter') {
             url = `https://twitter.com/intent/tweet?text=${message}`;
           }
-          console.log('URL:', url);
-          const canOpen = await Linking.canOpenURL(url);
-          if (canOpen) {
-            await Linking.openURL(url);
-            showSnackbar('Snap shared successfully.', 'success');
-          } else {
-            showSnackbar('Failed to share snap.', 'error');
-          }
+          await Linking.openURL(url);
         } catch (error) {
-          console.error('Error sharing snap:', error);
           showSnackbar('An error occurred. Please try again later.', 'error');
         } finally {
           setLoadingShareModal(false);
