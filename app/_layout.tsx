@@ -24,6 +24,7 @@ import SnapScreen from './screens/snap';
 import ProfileFeedScreen from './screens/profile-feed';
 import UserStatsScreen from './screens/user-stats';
 import EmailRegisterPIN from './screens/email-register-pin';
+import ForgotPassword from './screens/forgot-password';
 
 const RootStack = createNativeStackNavigator();
 
@@ -104,9 +105,13 @@ const RootLayout: React.FC = () => {
               <RootStack.Screen name="screens/email-register-pin">
                 {() => <EmailRegisterPIN showSnackbar={showSnackbar} />}
               </RootStack.Screen>
+              <RootStack.Screen name="screens/forgot-password">
+                {() => <ForgotPassword showSnackbar={showSnackbar} />}
+              </RootStack.Screen>
               <RootStack.Screen name="screens/email-login">
                 {() => <EmailLogin showSnackbar={showSnackbar} fcmToken={firebaseState.fcmToken} />}
               </RootStack.Screen>
+
             </>
           )}
         </RootStack.Navigator>

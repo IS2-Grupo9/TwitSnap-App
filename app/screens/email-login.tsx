@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { TextInput, Button, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,7 @@ import { useFirebase } from '@/components/contexts/FirebaseContext';
 
 import { fireDB } from '@/config/firebaseConfig';
 import firestore from '@react-native-firebase/firestore';
+import { router } from 'expo-router';
 
 type EmailLoginProps = {
   showSnackbar: (message: string, type: string) => void;
@@ -143,6 +144,9 @@ const EmailLogin = ({ showSnackbar, fcmToken }: EmailLoginProps) => {
             Log In
           </Button>
         )}
+        <TouchableOpacity onPress={() => router.push('./forgot-password')}>
+          <Text style={styles.text}>Forgot your password? Reset it here.</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -152,6 +156,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 20 },
   logo: { marginBottom: 25 },
   title: { fontSize: 24, textAlign: 'center', color: 'black', marginBottom: 10 },
+  text: { textAlign: 'center', color: '#65558F', marginTop: 20 },
   input: { marginVertical: 10, backgroundColor: 'transparent' },
   button: { marginVertical: 20, marginHorizontal: 40 },
   errorText: { color: 'red', marginBottom: 10, textAlign: 'center' },
