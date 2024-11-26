@@ -16,7 +16,7 @@ const EmailRegisterPIN = ({ showSnackbar }: EmailRegisterPINProps) => {
   const router = useRouter();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
-  const handleRegister = async () => {
+  const handleRegisterPIN = async () => {
     if (!pin) {
       showSnackbar('PIN required.', 'error');
       return;
@@ -78,7 +78,7 @@ const EmailRegisterPIN = ({ showSnackbar }: EmailRegisterPINProps) => {
         {loading ? (
           <ActivityIndicator size="large" color="#65558F" />
         ) : (
-          <Button onPress={handleRegister}
+          <Button onPress={handleRegisterPIN}
             mode="contained"
             buttonColor='#65558F'
             textColor='#FFFFFF'
