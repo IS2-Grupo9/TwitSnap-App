@@ -45,7 +45,7 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${apiUrl}/users/register`, {
+      const response = await fetch(`${apiUrl}/users/register/initiate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +59,10 @@ const EmailRegister = ({ showSnackbar }: EmailRegisterProps) => {
 
       if (response.ok) {
         showSnackbar('Account created, please check your email for a PIN.', 'success');
-        router.push('./email-register-pin');
+        router.push({
+          pathname: './email-register-pin',
+          params: { registerEmail: email },
+        });
       } else {
         const errorData = await response.json();
         showSnackbar(`An error occurred: ${errorData.message || 'Please try again.'}`, 'error');

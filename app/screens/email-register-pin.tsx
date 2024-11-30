@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, StyleSheet } from 'react-native';
 import { TextInput, Button, ActivityIndicator, Snackbar } from 'react-native-paper';
@@ -11,26 +11,39 @@ type EmailRegisterPINProps = {
 };
 
 const EmailRegisterPIN = ({ showSnackbar }: EmailRegisterPINProps) => {
-  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
+  const { registerEmail } = useGlobalSearchParams<{ registerEmail: string }>();
+  const [email, setEmail] = useState(registerEmail);
+  const [emailError, setEmailError] = useState(false);
+  const [pin, setPin] = useState('');
   const router = useRouter();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
+  
+  const validateEmail = (email: string) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
 
   const handleRegisterPIN = async () => {
-    if (!pin) {
-      showSnackbar('PIN required.', 'error');
+    if (!pin || !email) {
+      showSnackbar('Email and PIN required.', 'error');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      showSnackbar('Invalid email address.', 'error');
       return;
     }
 
     setLoading(true);
-
     try {
-      const response = await fetch(`${apiUrl}/users/register`, {
+      const response = await fetch(`${apiUrl}/users/register/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          email: email,
           pin: pin,
         }),
       });
@@ -58,7 +71,31 @@ const EmailRegisterPIN = ({ showSnackbar }: EmailRegisterPINProps) => {
     >
       <SafeAreaView style={styles.container}>
         <LogoHeader small={true} style={styles.logo} />
-        <Text style={styles.title}>Enter PIN sent to your email:</Text>
+        <Text style={styles.title}>Enter email and PIN:</Text>
+        <TextInput
+          mode="flat"
+          style={styles.input}
+          label={"Email"}
+          value={email}
+          underlineColor='black'
+          activeUnderlineColor='black'
+          textColor='black'
+          placeholderTextColor='black'
+          theme={{
+            colors: {
+              onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
+              error: 'red',
+            },
+          }}
+          error={emailError}
+          onChangeText={(text) => {
+            setEmail(text);
+            setEmailError(!validateEmail(text));
+          }}
+        />
+        {emailError && (
+          <Text style={styles.errorText}>Please enter a valid email address.</Text>
+        )}
         <TextInput
           mode="flat"
           style={styles.input}
