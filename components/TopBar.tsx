@@ -24,6 +24,7 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
 
   const [isChangePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
@@ -35,15 +36,20 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
   const handleChangePassword = async () => {
     setLoadingEdit(true);
     try {
-      if (!password || !confirmPassword) {
+      if (!password || !newPassword || !confirmPassword) {
         showSnackbar('All fields are required.', 'error');
         return;
       }
       
-      if (password !== confirmPassword) {
+      if (newPassword !== confirmPassword) {
         showSnackbar('Passwords do not match.', 'error');
         return;
       }  
+      
+      if (password === newPassword) {
+        showSnackbar('New password must be different from the current password.', 'error');
+        return;
+      }
       
       const response = await fetch(`${apiUrl}/users/profile`, {
         method: 'PUT',
@@ -52,7 +58,8 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
           'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
-          password: password,
+          oldPassword: password,
+          newPassword: newPassword,
         }),
       });
 
@@ -62,8 +69,7 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
         const message = await response.text();
         showSnackbar(JSON.parse(message).error || 'Invalid input.', 'error');
       } else if (response.status === 401) {
-        showSnackbar('Session expired. Please log in again.', 'error');
-        logout();
+        showSnackbar('Incorrect password.', 'error');
       } else {
         showSnackbar('Failed to change password. Please try again.', 'error');
       }
@@ -161,7 +167,7 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
                 />
               }
               style={styles.input}
-              label={"New password"}
+              label={"Current password"}
               value={password}
               underlineColor='black'
               activeUnderlineColor='black'
@@ -173,6 +179,30 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
                 },
               }}
               onChangeText={setPassword}
+              secureTextEntry={hidePassword}
+            />
+            <TextInput
+              mode="flat"
+              right={
+                <TextInput.Icon
+                  icon={hidePassword ? 'eye' : 'eye-off'}
+                  color='black'
+                  onPress={() => setHidePassword(!hidePassword)}
+                />
+              }
+              style={styles.input}
+              label={"New password"}
+              value={newPassword}
+              underlineColor='black'
+              activeUnderlineColor='black'
+              textColor='black'
+              placeholderTextColor='black'
+              theme={{
+                colors: {
+                  onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
+                },
+              }}
+              onChangeText={setNewPassword}
               secureTextEntry={hidePassword}
             />
             <TextInput
