@@ -77,8 +77,16 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
       showSnackbar('An error occurred. Please try again later.', 'error');
     } finally {
       setLoadingEdit(false);
-      setChangePasswordModalVisible(false);
+      closeModal();
     }
+  };
+
+  const closeModal = () => {
+    setChangePasswordModalVisible(false);
+    setPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setHidePassword(true);
   };
 
   const handleProfile = () => {
@@ -152,7 +160,7 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
         transparent={true} 
         visible={isChangePasswordModalVisible}
         animationType="fade"
-        onRequestClose={() => setChangePasswordModalVisible(false)}
+        onRequestClose={() => closeModal()}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -208,7 +216,7 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
             <TextInput
               mode="flat"
               right={
-                confirmPassword !== '' && password === confirmPassword ? (
+                confirmPassword !== '' && newPassword === confirmPassword ? (
                   <TextInput.Icon
                     icon='check'
                     color='#2E8F00'
@@ -245,7 +253,7 @@ export default function TopBar({ showSnackbar, type, showNotifications }: TopBar
                 Change Password
               </Button>
             )}
-            <Button mode="text" onPress={() => setChangePasswordModalVisible(false)} style={styles.cancelButton}>
+            <Button mode="text" onPress={() => closeModal()} style={styles.cancelButton}>
               Cancel
             </Button>
           </View>
