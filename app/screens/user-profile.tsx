@@ -237,7 +237,10 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
           <View style={styles.avatarContainer}>
             <Image style={styles.avatar} source={require("@/assets/images/avatar.png")} />
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.title}>{user.username}</Text>
+              <Text style={styles.title}>{user.username}</Text>  
+              {user.verified === 'verified' && (
+                <Ionicons name="checkmark-circle" size={26} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
+              )}
               {user.private && (
                 <Ionicons name="lock-closed" size={20} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
               )}

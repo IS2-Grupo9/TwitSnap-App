@@ -34,6 +34,8 @@ export interface User {
     createdAt: string;
     updatedAt: string;
     private: boolean;
+    verified?: string;
+    IDPicture?: string;
 }
 
 export interface Message {

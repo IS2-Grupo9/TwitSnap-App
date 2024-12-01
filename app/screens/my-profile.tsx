@@ -29,6 +29,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     createdAt: '',
     updatedAt: '',
     private: false,
+    verified: 'notVerified',
   });
   const [isPrivate, setIsPrivate] = useState(user.private); 
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
@@ -37,6 +38,12 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
   const [interestInput, setInterestInput] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
+
+  const [isVerifyModalVisible, setVerifyModalVisible] = useState(false);
+  const [verified, setVerified] = useState(user.verified);
+  const [fullNameInput, setFullNameInput] = useState('');
+  const [IDPictureInput, setIDPictureInput] = useState('');
+  const [loadingVerify, setLoadingVerify] = useState(false);
 
   const [isFollowInfoModalVisible, setFollowInfoModalVisible] = useState(false);
   const [followers, setFollowers] = useState<User[]>([]);
@@ -55,6 +62,46 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
+
+  const handleRequestVerification = async () => {
+    setLoadingVerify(true);
+    try {
+      if (!fullNameInput || !IDPictureInput) {
+        showSnackbar('Full name and ID picture URL are required.', 'error');
+        return;
+      }
+      
+      const response = await fetch(`${apiUrl}/users/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({
+          fullName: fullNameInput,
+          IDPicture: IDPictureInput,
+        }),
+      });
+
+      if (response.ok) {
+        showSnackbar('Verification request sent successfully!', 'success');
+        setVerified('pending');
+      } else if (response.status === 400) {
+        const message = await response.text();
+        showSnackbar(JSON.parse(message).error || 'Invalid input.', 'error');
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+      } else {
+        showSnackbar('Failed to send verification request. Please try again.', 'error');
+      }
+    } catch (error) {
+      showSnackbar('An error occurred. Please try again later.', 'error');
+    } finally {
+      setLoadingVerify(false);
+      setVerifyModalVisible(false);
+    }
+  }
 
   const handleProfileEdit = async () => {
     setLoadingEdit(true);
@@ -194,7 +241,8 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
         updateUserData(data);
         setParsedInterests(interests);
         setInterestInput(data.interests ? interests.join(', ') : '');
-        setIsPrivate(data.private);        
+        setIsPrivate(data.private);
+        setVerified(data.verified);   
         await fetchFollowInfo();
       } else if (response.status === 401) {
         showSnackbar('Session expired. Please log in again.', 'error');
@@ -238,6 +286,9 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
             <Image style={styles.avatar} source={require('@/assets/images/avatar.png')} />
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.title}>{user.username}</Text>
+              {user.verified === 'verified' && (
+                <Ionicons name="checkmark-circle" size={26} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
+              )}
               {user.private && (
                 <Ionicons name="lock-closed" size={20} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
               )}
@@ -291,15 +342,16 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                 <Ionicons name="stats-chart-outline" size={24} color="#65558F" />
                 <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Stats</Text>
               </TouchableOpacity>
-              <Button
-                mode="contained"
-                onPress={() => setEditModalVisible(true)}
-                buttonColor='#65558F'
-                textColor='#FFFFFF'
-                style={styles.editButton}
-              >
-                Edit Profile
-              </Button>    
+              <TouchableOpacity onPress={() => setEditModalVisible(true)} style={styles.moreButton}>
+                <Ionicons name="pencil-outline" size={24} color="#65558F" />
+                <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Edit</Text>
+              </TouchableOpacity>
+              {verified !== 'verified' && (
+                <TouchableOpacity onPress={() => setVerifyModalVisible(true)} style={styles.moreButton}>
+                  <Ionicons name="checkmark-circle-outline" size={24} color="#65558F" />
+                  <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Verify</Text>
+                </TouchableOpacity>
+              )} 
               <TouchableOpacity onPress={() => goToProfileFeed(user.id)} style={styles.moreButton}>
                 <Ionicons name="document-text-outline" size={24} color="#65558F" />
                 <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Snaps</Text>
@@ -378,6 +430,69 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
             </ScrollView>
             <Button mode="text" onPress={() => setFollowInfoModalVisible(false)} style={styles.cancelButton}>
               Close
+            </Button>
+          </View>
+        </View>
+      </Modal>
+      <Modal transparent={true} visible={isVerifyModalVisible} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Verify your Account</Text>
+            <ScrollView style={{ maxHeight: 200, marginVertical: 10, paddingHorizontal: 10 }}>
+              <Text style={{ color: '#888', textAlign: 'center', fontSize: 16, fontWeight: 'bold' }}>
+                TwitSnap Verification Terms and Conditions{"\n"}
+              </Text>
+              <Text style={{ color: '#888', textAlign: 'justify' }}>
+                By submitting a verification request for your TwitSnap account, you agree to the following terms:{"\n\n"}
+                
+                1. Required Information:{"\n"}
+                - You must provide your full legal name.{"\n"}
+                - You must provide a URL to a clear and valid photo ID (e.g., passport, driver’s license, or government-issued identification).{"\n\n"}
+                
+                2. Verification Process:{"\n"}
+                - Submitting a request does not guarantee verification. TwitSnap administrators will review your submission and decide at their sole discretion whether to grant verified status.{"\n"}
+                - TwitSnap reserves the right to request additional information if necessary.{"\n\n"}
+                
+                3. Verification Revocation:{"\n"}
+                - Verified status may be revoked at any time if the provided information is found to be inaccurate, outdated, or if the account violates TwitSnap’s Community Guidelines or Terms of Service.{"\n\n"}
+                
+                4. Privacy:{"\n"}
+                - Any personal information submitted during the verification process will be handled in accordance with TwitSnap’s Privacy Policy.{"\n\n"}
+                
+                By proceeding with the verification request, you confirm that the information provided is accurate and that you understand and accept these terms.
+              </Text>
+            </ScrollView>
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              value={fullNameInput}
+              onChangeText={setFullNameInput}
+              placeholderTextColor="#888"
+            />
+            <Text style={styles.inputLabel}>ID Picture URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="ID Picture URL"
+              value={IDPictureInput}
+              onChangeText={setIDPictureInput}
+              placeholderTextColor="#888"
+            />
+            {loadingVerify ? (
+              <ActivityIndicator size="large" color="#65558F" />
+            ) : (
+              <Button
+                mode="contained"
+                onPress={verified === 'pending' ? () => {} : handleRequestVerification}
+                buttonColor={verified === 'pending' ? "#D3CFE3" : "#65558F"}
+                textColor={verified === 'pending' ? "#A39BAA" : "#FFFFFF"}
+                style={styles.modalButton}
+              >
+                {verified === 'pending' ? 'Request Pending' : 'Request Verification'}
+              </Button>
+            )}
+            <Button mode="text" onPress={() => setVerifyModalVisible(false)} style={styles.cancelButton}>
+              Cancel
             </Button>
           </View>
         </View>
