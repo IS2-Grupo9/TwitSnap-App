@@ -74,7 +74,11 @@ const CreateAccount = ({ showSnackbar, fcmToken }: CreateAccountProps) => {
 
       const data = await response.json();
       if (!response.ok) {
-        showSnackbar(data.message || 'Failed to sign in with Google. Please try again.', 'error');
+        showSnackbar(data.message || 'Failed to sign in with Google. Please try again.', 'error');        
+        const hasPreviousSignIn = GoogleSignin.hasPreviousSignIn();
+        if (hasPreviousSignIn) {
+          await GoogleSignin.signOut();
+        }
         return;
       }
       if (data.token && data.user) {
