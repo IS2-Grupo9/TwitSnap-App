@@ -35,6 +35,7 @@ export interface User {
     updatedAt: string;
     private: boolean;
     verified?: string;
+    fullName?: string;
     IDPicture?: string;
 }
 

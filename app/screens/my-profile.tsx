@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, Modal, TextInput, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { ActivityIndicator, Button, Card, Chip, Switch } from 'react-native-paper';
 import TopBar from '@/components/TopBar';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -30,6 +30,8 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
     updatedAt: '',
     private: false,
     verified: 'notVerified',
+    fullName: '',
+    IDPicture: '',
   });
   const [isPrivate, setIsPrivate] = useState(user.private); 
   const [parsedInterests, setParsedInterests] = useState<string[]>([]);
@@ -49,7 +51,8 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
   const [followers, setFollowers] = useState<User[]>([]);
   const [following, setFollowing] = useState<User[]>([]);
   const [followInfoType, setFollowInfoType] = useState('following');
-  
+
+  const [isVerifyInfoModalVisible, setVerifyInfoModalVisible] = useState(false);  
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
@@ -287,7 +290,9 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={styles.title}>{user.username}</Text>
               {user.verified === 'verified' && (
-                <Ionicons name="checkmark-circle" size={26} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
+                <TouchableOpacity onPress={() => setVerifyInfoModalVisible(true)}>
+                  <Ionicons name="checkmark-circle" size={26} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
+                </TouchableOpacity>
               )}
               {user.private && (
                 <Ionicons name="lock-closed" size={20} color="#65558F" style={{ marginLeft: 8, marginBottom: 5}} />
@@ -492,6 +497,38 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
               </Button>
             )}
             <Button mode="text" onPress={() => setVerifyModalVisible(false)} style={styles.cancelButton}>
+              Cancel
+            </Button>
+          </View>
+        </View>
+      </Modal>
+      <Modal transparent={true} visible={isVerifyInfoModalVisible} animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Verification Information</Text>
+            <Text style={{ color: '#65558F', textAlign: 'center', fontSize: 16, fontWeight: 'bold', marginBottom: 20 }}>
+              Your account has been verified by TwitSnap administrators!
+            </Text>
+            <Text style={{ color: '#888', fontSize: 14, marginBottom: 20 }}>
+              You provided the following information for verification:
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '90%' }}>
+              <Text style={{ color: '#888', fontSize: 14, marginBottom: 10, fontWeight: 'bold' }}>
+                Full Name:
+              </Text>
+              <Text style={{ color: '#888', fontSize: 14, marginBottom: 10 }}>
+                {user.fullName}
+              </Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '90%' }}>
+              <Text style={{ color: '#888', fontSize: 14, marginBottom: 10, fontWeight: 'bold' }}>
+                ID Picture URL:
+              </Text>
+              <Text style={{ color: '#65558F', fontSize: 14, marginBottom: 10 }} onPress={() => Linking.openURL(user.IDPicture || '')}>
+                View
+              </Text>
+            </View>     
+            <Button mode="text" onPress={() => setVerifyInfoModalVisible(false)} style={styles.cancelButton}>
               Cancel
             </Button>
           </View>
