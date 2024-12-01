@@ -11,7 +11,7 @@ import { fireDB } from '@/config/firebaseConfig';
 import firestore from '@react-native-firebase/firestore';
 
 GoogleSignin.configure({
-  webClientId: '823250306806-qvjrjb4uleclm1s2dd10q95euc8r69hc.apps.googleusercontent.com'
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID
 });
 
 type LoginProps = {
