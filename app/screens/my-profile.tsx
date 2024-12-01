@@ -286,7 +286,7 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                 Followers: {followers.length}
               </Button>
             </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', margin: 20, width: '100%', position: 'absolute', bottom: 0}}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', margin: 20, width: '100%'}}>
               <TouchableOpacity onPress={() => goToUserStats(user.id)} style={styles.moreButton}>
                 <Ionicons name="stats-chart-outline" size={24} color="#65558F" />
                 <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Stats</Text>
