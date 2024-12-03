@@ -39,6 +39,8 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
   const [range, setRange] = useState<{ startDate: Date; endDate: Date }>({ startDate: getDefaultDate(7), endDate: getDefaultDate(0) });
   const [open, setOpen] = useState(false);
 
+  const [timer, setTimer] = useState<number>(30000);
+
   const onDismiss = useCallback(() => {
     setOpen(false);
   }, [setOpen]);
@@ -70,8 +72,10 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
     }
   };
 
-  const fetchUserSnapsStats = async () => {
-    setLoading(true);
+  const fetchUserSnapsStats = async (noLoad = false) => {
+    if (!noLoad) {
+      setLoading(true);
+    }
     const dateRange = range.startDate && range.endDate &&
       `?from=${range.startDate.toISOString().split('T')[0]}&to=${range.endDate.toISOString().split('T')[0]}` || '';
     try {
@@ -95,6 +99,19 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
   useEffect(() => {
     fetchUserStats();
     fetchUserSnapsStats();
+    const interval = setInterval(() => {
+      setTimer(prevTimer => {
+        const updatedTimer = prevTimer - 1000;
+        if (updatedTimer <= 0) {
+          fetchUserStats();
+          fetchUserSnapsStats(true);
+          return 30000;
+        }
+        return updatedTimer;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, [range]);
 
   useEffect(() => {
@@ -190,6 +207,9 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
         <ActivityIndicator size="large" color="#65558F" />
       ) : (
         <ScrollView style={styles.scrollContainer}>
+          <Text style={{ fontSize: 12, color: '#aaa', marginTop: 20, textAlign: 'right' }}>
+            Updating in {timer / 1000} seconds
+          </Text>
           <Text style={styles.userStatsTitle}>User Stats</Text>
           <View style={styles.userStatsContainer}>
             <Text style={styles.statText}>User ID: {userId}</Text>
