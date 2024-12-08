@@ -15,11 +15,12 @@ interface SnapsViewProps {
   showSnackbar: (message: string, type: string) => void;
   feed?: boolean;
   userFeed?: boolean;
+  favFeed?: boolean;
   userId?: string;
   searchType?: string;
 }
 
-export default function SnapsView({ showSnackbar, feed, userFeed, userId, searchType }: SnapsViewProps) {
+export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userId, searchType }: SnapsViewProps) {
   const { auth, logout } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
@@ -316,7 +317,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
     }
   };
 
-  const fetchProfileSnaps = async () => {
+  const fetchProfileSnaps = async (type?: string) => {
     try {
       const response = await fetch(`${postsApiUrl}/users/owner/${userId}/viewer/${auth.user?.id}/feed`, {
         method: 'GET',
@@ -359,7 +360,12 @@ export default function SnapsView({ showSnackbar, feed, userFeed, userId, search
     try {
       setOffset(0);
       setHasMore(true);
-      const fetchedSnaps : ExtendedSnap[] = feed ? (userFeed ? await fetchProfileSnaps() : await fetchSnaps(0)) : await handleSearch();
+      const fetchedSnaps : ExtendedSnap[] = feed ?
+        (userFeed ?
+          (favFeed ? await fetchProfileSnaps('favorites')
+            : await fetchProfileSnaps())
+          : await fetchSnaps(0))
+        : await handleSearch();
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
         setLoading(false);

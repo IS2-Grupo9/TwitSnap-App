@@ -263,7 +263,14 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
   const goToProfileFeed = (userId: any) => {
     router.push({
       pathname: '/screens/profile-feed',
-      params: { userId : userId.toString() },
+      params: { userId : userId.toString(), favFeed: 'false' },
+    });
+  }
+
+  const goToFavFeed = (userId: any) => {
+    router.push({
+      pathname: '/screens/profile-feed',
+      params: { userId : userId.toString(), favFeed: 'true' },
     });
   }
 
@@ -356,7 +363,11 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
                   <Ionicons name="checkmark-circle-outline" size={24} color="#65558F" />
                   <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Verify</Text>
                 </TouchableOpacity>
-              )} 
+              )}
+              <TouchableOpacity onPress={() => goToFavFeed(user.id)} style={styles.moreButton}>
+                <Ionicons name="star-outline" size={24} color="#65558F" />
+                <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Favorites</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => goToProfileFeed(user.id)} style={styles.moreButton}>
                 <Ionicons name="document-text-outline" size={24} color="#65558F" />
                 <Text style={{ color: '#65558F', fontWeight: 'bold', textAlign: 'center' }}>Snaps</Text>

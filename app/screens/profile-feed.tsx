@@ -8,7 +8,7 @@ interface ProfileFeedProps {
 }
 
 export default function ProfileFeedScreen({ showSnackbar }: ProfileFeedProps) {
-  const { userId } = useGlobalSearchParams<{ userId: string }>();
+  const { userId, favFeed } = useGlobalSearchParams<{ userId: string, favFeed: string }>();
 
   return (
     <>
@@ -17,6 +17,7 @@ export default function ProfileFeedScreen({ showSnackbar }: ProfileFeedProps) {
           showSnackbar={showSnackbar}
           feed={true}
           userFeed={true}
+          favFeed={favFeed === 'true' ? true : false}
           userId={userId}
         />
     </> 
