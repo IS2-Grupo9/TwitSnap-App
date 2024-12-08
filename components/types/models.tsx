@@ -12,6 +12,7 @@ export interface Snap {
 export interface ExtendedSnap extends Snap {
     liked: boolean;
     shared: boolean;
+    favorited: boolean;
     editable: boolean;
     username: string;
     shared_username?: string;

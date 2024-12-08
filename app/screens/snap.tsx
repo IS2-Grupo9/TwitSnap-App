@@ -238,6 +238,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
       snap.shared_username = userDict[snap.user_share];
       snap.liked = await fetchLiked();
       snap.shared = await fetchShared();
+      snap.favorited = await fetchLiked();
       snap.editable = snap.user.toString() === auth.user?.id.toString();
       setSnap(snap);
       fetchStats();
@@ -295,40 +296,47 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
             <View style={styles.iconContainer}>
               <Ionicons
                 name={snap?.liked ? 'heart' : 'heart-outline'}
-                size={25}
+                size={22}
                 color="#65558F"
                 onPress={() => handleLikeSnap(snap?.id, snap?.liked)}
               />
               <Text style={styles.likesCount}>{likeCount ? `${likeCount} like` + (likeCount > 1 ? 's' : '') : ''}</Text>
-              <View style={{ width: 10 }} />
+              <View style={{ width: 8 }} />
               <MaterialIcons
                 name={snap?.shared ? 'repeat-on' : 'repeat'}
-                size={25}
+                size={22}
                 color="#65558F"
                 onPress={() => handleShareSnap(snap?.id, snap?.user, snap?.shared)}
               />
               <Text style={styles.likesCount}>{shareCount ? `${shareCount} share` + (shareCount > 1 ? 's' : '') : ''}</Text>
-              <View style={{ width: 10 }} />
+              <View style={{ width: 8 }} />
               <MaterialIcons
                 name="share"
-                size={25}
+                size={22}
                 color="#65558F"
                 onPress={() => {
                   setShareModalVisible(true);                  
                 }}
               />
+              <View style={{ width: 8 }} />
+              <Ionicons
+                name={snap?.liked ? 'star' : 'star-outline'}
+                size={22}
+                color="#65558F"
+                onPress={() => handleLikeSnap(snap?.id, snap?.liked)}
+              />
               {snap?.editable && (
                 <View style={styles.editIcons}>
                   <Ionicons
                     name="pencil-outline"
-                    size={20}
+                    size={18}
                     color="#65558F"
                     onPress={() => handleEditSnap(snap)}
                   />
                   <View style={{ width: 15 }} />
                   <Ionicons
                     name="trash-outline"
-                    size={20}
+                    size={18}
                     color="#65558F"
                     onPress={() => handleDeleteSnap(snap.id)}
                   />
@@ -435,7 +443,7 @@ const styles = StyleSheet.create({
   },
   likesCount: {
     marginLeft: 10,
-    fontSize: 14,
+    fontSize: 12,
     color: '#555',
   },
   sharedContainer: {
