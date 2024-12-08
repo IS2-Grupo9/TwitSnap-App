@@ -541,6 +541,14 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
                   />
                   <View style={{width: 5}} />
                   <Ionicons
+                    name={snap.liked ? 'star' : 'star-outline'}
+                    size={30}
+                    color="#65558F"
+                    style={styles.iconButton}
+                    onPress={() => handleLikeSnap(snap.id, snap.liked)}
+                  />
+                  <View style={{width: 5}} />
+                  <Ionicons
                     name="information-circle-outline"
                     size={30}
                     color="#65558F"
