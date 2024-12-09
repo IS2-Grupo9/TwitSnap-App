@@ -154,6 +154,42 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
     }      
   };
 
+  const handleFavoriteSnap = async (
+    postAuthorId: string | undefined,
+    snapId: number | undefined,
+    favorited: boolean | undefined) => {
+    if (!snapId || favorited === undefined) return;
+    const method = favorited ? 'DELETE' : 'POST';
+    const action = favorited ? 'unfav' : 'fav';
+    try {
+      const response = await fetch(`${apiUrl}/interactions/${action}`, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ 
+          post_author_id: postAuthorId?.toString(),
+          user_id: auth.user?.id.toString(),
+          post_id: snapId.toString() 
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar(`Failed to ${action}orite snap.`, 'error');
+        }
+        return;
+      }
+      loadSnap();
+      showSnackbar(`Snap ${action}orited.`, 'success');
+    } catch (error) {
+      showSnackbar(`Failed to ${action}orite snap.`, 'error');
+    }
+  };
+
   const goToProfile = (userId: string | undefined) => {
     if (!userId) return;
     if (userId === String(auth.user?.id)){
@@ -221,6 +257,33 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
     }
   }
 
+  const fetchFaved = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/favourites`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+        },
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch favorited snaps.', 'error');
+        }
+        return false;
+      }
+      const favSnaps = await response.json();
+      const favSnapsIds = favSnaps.data.map((fav: any) => fav.post_id);
+      return favSnapsIds.includes(snapId);
+    } catch (error) {
+      showSnackbar('Failed to fetch favorited snaps.', 'error');
+      return false;
+    }
+  }
+
   const fetchStats = async () => {
     try {
       const response = await fetch(`${apiUrl}/statistics/posts/${snapId}/creator/${creatorId}/viewer/${auth.user?.id}`, {
@@ -270,7 +333,7 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
       snap.shared_username = userDict[snap.user_share];
       snap.liked = await fetchLiked();
       snap.shared = await fetchShared();
-      snap.favorited = await fetchLiked();
+      snap.favorited = await fetchFaved();
       snap.editable = snap.user.toString() === auth.user?.id.toString();
       setSnap(snap);
       fetchStats();
@@ -341,7 +404,14 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
                 onPress={() => handleShareSnap(snap?.id, snap?.user, snap?.shared)}
               />
               <Text style={styles.likesCount}>{shareCount ? `${shareCount} share` + (shareCount > 1 ? 's' : '') : ''}</Text>
-              <View style={{ width: 8 }} />
+              <View style={{ width: 16 }} />
+              <Ionicons
+                name={snap?.favorited ? 'star' : 'star-outline'}
+                size={22}
+                color="#65558F"
+                onPress={() => handleFavoriteSnap(snap?.user, snap?.id, snap?.favorited)}
+              />
+              <View style={{ width: 16 }} />
               <MaterialIcons
                 name="share"
                 size={22}
@@ -349,13 +419,6 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
                 onPress={() => {
                   setShareModalVisible(true);                  
                 }}
-              />
-              <View style={{ width: 8 }} />
-              <Ionicons
-                name={snap?.liked ? 'star' : 'star-outline'}
-                size={22}
-                color="#65558F"
-                onPress={() => handleLikeSnap(snap?.id, snap?.liked)}
               />
               {snap?.editable && (
                 <View style={styles.editIcons}>

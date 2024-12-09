@@ -45,6 +45,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
   const [likedSnaps, setLikedSnaps] = useState<number[]>([]);
   const [sharedSnaps, setSharedSnaps] = useState<number[]>([]);
+  const [favoritedSnaps, setFavoritedSnaps] = useState<number[]>([]);
 
   const [limit] = useState(10);
   const [offset, setOffset] = useState(0);
@@ -197,6 +198,55 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     }      
   };
 
+  const handleFavoriteSnap = async (
+    postAuthorId: string,
+    snapId: number,
+    favorited: boolean) => {
+    const method = favorited ? 'DELETE' : 'POST';
+    const action = favorited ? 'unfav' : 'fav';
+    try {
+      const response = await fetch(`${apiUrl}/interactions/${action}`, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({
+          post_author_id: postAuthorId.toString(),
+          user_id: auth.user?.id.toString(),
+          post_id: snapId.toString(),
+        }),
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar(`Failed to ${action}orite snap.`, 'error');
+        }
+        return;
+      }
+      const updatedSnaps = snaps.map(snap => {
+        if (snap.id === snapId) {
+          snap.favorited = !favorited;
+        }
+        return snap;
+      });
+      setSnaps(updatedSnaps);
+      if (favorited) {
+        setFavoritedSnaps(favoritedSnaps.filter(id => id !== snapId));
+      } else {
+        setFavoritedSnaps([...favoritedSnaps, snapId]);
+      }
+      if (userFeed && favFeed) {
+        loadSnaps();
+      }
+      showSnackbar(`Snap ${action}orited.`, 'success');
+    } catch (error) {
+      showSnackbar(`Failed to ${action}orite snap.`, 'error');
+    }      
+  };  
+
   const goToProfile = (userId: string) => {
     const state = navigation.getState();
     if (userId === String(auth.user?.id)){
@@ -224,11 +274,26 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
         },
       });
       if (response.ok) {
-        const data = await response.json();
-        const sortedSnaps = data?.data?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
+        const snaps = await response.json();
+        const lsnaps = await fetchLikedSnaps();
+        const ssnaps = await fetchSharedSnaps();
+        const fsnaps = await fetchFavoritedSnaps();
+        if (!Array.isArray(snaps.data)) {
+          return [];
+        }
+        const completedSnaps = snaps.data?.map((snap: any) => ({
+          ...snap,
+          liked: Array.isArray(lsnaps) && lsnaps.includes(snap.id),
+          shared: Array.isArray(ssnaps) && ssnaps.includes(snap.id),
+          favorited: Array.isArray(fsnaps) && fsnaps.includes(snap.id),
+          editable: snap.user === String(auth.user?.id),
+          username: 'Unknown',
+          shared_username: 'Unknown',
+        }));
+        completedSnaps?.sort((a: ExtendedSnap, b: ExtendedSnap) => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
-        return sortedSnaps;
+        return completedSnaps;
       } else if (response.status === 401) {
         showSnackbar('Session expired. Please log in again.', 'error');
         logout();
@@ -301,6 +366,34 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     }
   }
   
+  const fetchFavoritedSnaps = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/favourites`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
+        },
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch favorited snaps.', 'error');
+        }
+        return [];
+      }
+      const favs = await response.json();
+      const favoritedSnaps = favs.data.map((fav: any) => fav.post_id);
+      setFavoritedSnaps(favoritedSnaps);
+      return favoritedSnaps;
+    } catch (error) {
+      showSnackbar('Failed to fetch favorited snaps.', 'error');
+      return [];
+    }
+  }
+  
   const fetchSnaps = async (currentOffset: number = 0) => {
     try {
       const interestWords = auth.user?.interests?.split(',').map((word) => word.trim()).join(',');
@@ -327,6 +420,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
       const lsnaps = await fetchLikedSnaps();
       const ssnaps = await fetchSharedSnaps();
+      const fsnaps = await fetchFavoritedSnaps();
       if (!Array.isArray(snaps.data)) {
         return [];
       }
@@ -334,6 +428,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
         ...snap,
         liked: Array.isArray(lsnaps) && lsnaps.includes(snap.id),
         shared: Array.isArray(ssnaps) && ssnaps.includes(snap.id),
+        favorited: Array.isArray(fsnaps) && fsnaps.includes(snap.id),
         editable: snap.user === String(auth.user?.id),
         username: 'Unknown',
         shared_username: 'Unknown',
@@ -349,9 +444,11 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     }
   };
 
-  const fetchProfileSnaps = async (type?: string) => {
+  const fetchProfileSnaps = async () => {
     try {
-      const response = await fetch(`${apiUrl}/posts/users/owner/${userId}/viewer/${auth.user?.id}/feed`, {
+      let url = favFeed ? `${apiUrl}/posts/users/${userId}/favourites/feed` : 
+        `${apiUrl}/posts/users/owner/${userId}/viewer/${auth.user?.id}/feed`;
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -371,6 +468,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
       const lsnaps = await fetchLikedSnaps();
       const ssnaps = await fetchSharedSnaps();
+      const fsnaps = await fetchFavoritedSnaps();
       if (!Array.isArray(snaps.data)) {
         return [];
       }
@@ -378,6 +476,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
         ...snap,
         liked: Array.isArray(lsnaps) && lsnaps.includes(snap.id),
         shared: Array.isArray(ssnaps) && ssnaps.includes(snap.id),
+        favorited: Array.isArray(fsnaps) && fsnaps.includes(snap.id),
         editable: snap.user === String(auth.user?.id),
         username: 'Unknown',
         shared_username: 'Unknown',
@@ -400,8 +499,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
       setHasMore(true);
       const fetchedSnaps : ExtendedSnap[] = feed ?
         (userFeed ?
-          (favFeed ? await fetchProfileSnaps('favorites')
-            : await fetchProfileSnaps())
+          await fetchProfileSnaps()
           : await fetchSnaps(0))
         : await handleSearch();
       if (fetchedSnaps.length === 0) {
@@ -567,6 +665,14 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
                     onPress={() => handleShareSnap(snap.id, snap.user, snap.shared)}
                   />
                   <View style={{width: 5}} />
+                  <Ionicons
+                    name={snap.favorited ? 'star' : 'star-outline'}
+                    size={30}
+                    color="#65558F"
+                    style={styles.iconButton}
+                    onPress={() => handleFavoriteSnap(snap.user, snap.id, snap.favorited)}
+                  />
+                  <View style={{width: 5}} />
                   <MaterialIcons
                     name="share"
                     size={30}
@@ -579,14 +685,6 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
                   />
                   <View style={{width: 5}} />
                   <Ionicons
-                    name={snap.liked ? 'star' : 'star-outline'}
-                    size={30}
-                    color="#65558F"
-                    style={styles.iconButton}
-                    onPress={() => handleLikeSnap(snap.id, snap.liked)}
-                  />
-                  <View style={{width: 5}} />
-                  <Ionicons
                     name="information-circle-outline"
                     size={30}
                     color="#65558F"
@@ -596,7 +694,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
                 </Card.Actions>
               </Card>
             ))}
-            {hasMore && showLoadMore && !userFeed && (
+            {hasMore && showLoadMore && !userFeed && feed && (
               <Button onPress={loadMoreSnaps} loading={loading} mode="outlined" style={styles.loadMoreButton}>
                 <Text style={{ color: '#65558F' }}>Load More</Text>
               </Button>
