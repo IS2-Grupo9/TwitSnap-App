@@ -31,10 +31,6 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
   
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
-  // TODO: Do through gateway API with authorization
-  const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
-  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
-
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -129,15 +125,21 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     const method = liked ? 'DELETE' : 'POST';
     const action = liked ? 'unlike' : 'like';
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/${action}`, {
+      const response = await fetch(`${apiUrl}/interactions/${action}`, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({ user_id: auth.user?.id.toString(), post_id: snapId.toString() }),
       });
       if (!response.ok) {
-        showSnackbar(`Failed to ${action} snap.`, 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar(`Failed to ${action} snap.`, 'error');
+        }
         return;
       }
       const updatedSnaps = snaps.map(snap => {
@@ -162,10 +164,11 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     const method = shared ? 'DELETE' : 'POST';
     const action = shared ? 'unshare' : 'share';
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/${action}`, {
+      const response = await fetch(`${apiUrl}/interactions/${action}`, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
           original_user_id: userId.toString(),
@@ -174,7 +177,12 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
         }),
       });
       if (!response.ok) {
-        showSnackbar(`Failed to ${action} snap.`, 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar(`Failed to ${action} snap.`, 'error');
+        }
         return;
       }
       loadSnaps();
@@ -208,10 +216,11 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
   const handleSearch = async () => {
     try {
-      const response = await fetch(`${postsApiUrl}/search/${searchType}?${searchType}=${searchQuery}`, {
+      const response = await fetch(`${apiUrl}/posts/search/${searchType}?${searchType}=${searchQuery}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (response.ok) {
@@ -220,7 +229,12 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         });
         return sortedSnaps;
-      } else {
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+        return [];
+      }
+      else {
         return [];
       }
     }
@@ -233,14 +247,20 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
   const fetchLikedSnaps = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/likes`, {
+      const response = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/likes`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch liked snaps.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch liked snaps.', 'error');
+        }
         return [];
       }
       const likes = await response.json();
@@ -255,14 +275,20 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
   const fetchSharedSnaps = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/shares`, {
+      const response = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/shares`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch shared snaps.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch shared snaps.', 'error');
+        }
         return [];
       }
       const shares = await response.json();
@@ -279,14 +305,20 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     try {
       const interestWords = auth.user?.interests?.split(',').map((word) => word.trim()).join(',');
       const extraFields = auth.user?.interests ? `&interest_words=${interestWords}` : '';
-      const response = await fetch(`${postsApiUrl}/feed?user_id=${auth.user?.id}&limit=${limit}&offset=${currentOffset}${extraFields}`, {
+      const response = await fetch(`${apiUrl}/posts/feed?user_id=${auth.user?.id}&limit=${limit}&offset=${currentOffset}${extraFields}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch snaps.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch snaps.', 'error');
+        }
         return [];
       }
       const snaps = await response.json();
@@ -319,14 +351,20 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
 
   const fetchProfileSnaps = async (type?: string) => {
     try {
-      const response = await fetch(`${postsApiUrl}/users/owner/${userId}/viewer/${auth.user?.id}/feed`, {
+      const response = await fetch(`${apiUrl}/posts/users/owner/${userId}/viewer/${auth.user?.id}/feed`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch snaps.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch snaps.', 'error');
+        }
         return [];
       }
       const snaps = await response.json();

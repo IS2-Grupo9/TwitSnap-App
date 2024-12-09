@@ -18,7 +18,6 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
   const { auth, updateUserData, logout } = useAuth();
   const { registerFCMToken } = useFirebase().firebaseState;
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
-  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [user, setUser] = useState<User>({
     id: 0,
@@ -186,24 +185,36 @@ export default function MyProfileScreen({ showSnackbar }: MyProfileScreenProps) 
 
   const fetchFollowInfo = async () => {
     try {
-      const followsResponse = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/follows`, {
+      const followsResponse = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/follows`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!followsResponse.ok) {
-        showSnackbar('Failed to fetch follow data.', 'error');
+        if (followsResponse.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch follow data.', 'error');
+        }
         return;
       }
-      const followersResponse = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/followers`, {
+      const followersResponse = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/followers`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!followersResponse.ok) {
-        showSnackbar('Failed to fetch follow data.', 'error');
+        if (followersResponse.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch follow data.', 'error');
+        }
         return;
       }
       const followsData = await followsResponse.json();

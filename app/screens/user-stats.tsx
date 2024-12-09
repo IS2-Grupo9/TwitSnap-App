@@ -7,6 +7,7 @@ import { CartesianChart, Line } from "victory-native";
 import { SnapStats } from '@/components/types/models';
 import { useFont } from "@shopify/react-native-skia";
 import { get } from 'http';
+import { useAuth } from '@/components/contexts/AuthContext';
 registerTranslation('en-GB', enGB);
 
 
@@ -24,8 +25,9 @@ const getDefaultDate = (days: number): Date => {
 };
 
 export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
+  const { auth, logout } = useAuth();
   const { userId } = useGlobalSearchParams<{ userId: string }>();
-  const apiStatsUrl = process.env.EXPO_PUBLIC_STATISTICS_URL;
+  const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
   const font = useFont(require('../../assets/fonts/SpaceMono-Regular.ttf'));
 
@@ -55,10 +57,11 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
 
   const fetchUserStats = async () => {
     try {
-      const response = await fetch(`${apiStatsUrl}/statistics/user/${userId}`, {
+      const response = await fetch(`${apiUrl}/statistics/user/${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (response.ok) {
@@ -66,6 +69,9 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
         setFollowerCount(data.data.follower_counter);
         setFollowingCount(data.data.followed_counter);
         setSnapsCount(data.data.snap_counter);
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
       }
     } catch (error) {
       console.error(error);
@@ -79,15 +85,19 @@ export default function UserStatsScreen({ showSnackbar }: UserStatsProps) {
     const dateRange = range.startDate && range.endDate &&
       `?from=${range.startDate.toISOString().split('T')[0]}&to=${range.endDate.toISOString().split('T')[0]}` || '';
     try {
-      const response = await fetch(`${apiStatsUrl}/statistics/user/${userId}/posts${dateRange}`, {
+      const response = await fetch(`${apiUrl}/statistics/user/${userId}/posts${dateRange}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (response.ok) {
         const data = await response.json();
         setSnapsInfo(data.data);
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
       }
     } catch (error) {
       console.error(error);

@@ -20,9 +20,9 @@ export default function DeleteSnapModal({
   setSnapToDelete,
   loadSnaps
 }: DeleteSnapModalProps) {
-    const { auth } = useAuth();
+    const { auth, logout } = useAuth();
     
-    const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
+    const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
     const [loadingDeleteModal, setLoadingDeleteModal] = useState(false);
 
@@ -30,16 +30,22 @@ export default function DeleteSnapModal({
       if (snapToDelete === null) return;
         setLoadingDeleteModal(true);
       try {
-        const response = await fetch(`${postsApiUrl}/snaps/${snapToDelete}`, {
+        const response = await fetch(`${apiUrl}/posts/snaps/${snapToDelete}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.token}`,
           },
         });
     
         if (!response.ok) {
-          const message = await response.text();
-          showSnackbar(JSON.parse(message).detail || 'Failed to delete snap.', 'error');
+          if (response.status === 401) {
+            showSnackbar('Session expired. Please log in again.', 'error');
+            logout();
+          } else {
+            const message = await response.text();
+            showSnackbar(JSON.parse(message).detail || 'Failed to delete snap.', 'error');
+          }
           setLoadingDeleteModal(false);
           setDeleteModalVisible(false);
           setSnapToDelete(null);

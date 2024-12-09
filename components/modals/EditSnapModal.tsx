@@ -23,9 +23,9 @@ export default function EditSnapModal({
   setEditedSnapMessage,
   loadSnaps
 }: EditSnapModalProps) {
-    const { auth } = useAuth();
+    const { auth, logout } = useAuth();
     
-    const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
+    const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
     const [isPrivate, setIsPrivate] = useState(editedSnap?.is_private || false);
 
@@ -41,10 +41,11 @@ export default function EditSnapModal({
           return;
         }
 
-        const response = await fetch(`${postsApiUrl}/snaps/${editedSnap?.id}`, {
+        const response = await fetch(`${apiUrl}/posts/snaps/${editedSnap?.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.token}`,
           },
           body: JSON.stringify({ 
             message: editedSnapMessage,
@@ -53,8 +54,13 @@ export default function EditSnapModal({
         });
 
         if (!response.ok) {
-          const message = await response.text();
-          showSnackbar(JSON.parse(message).detail || 'Failed to edit snap.', 'error');
+          if (response.status === 401) {
+            showSnackbar('Session expired. Please log in again.', 'error');
+            logout();
+          } else {
+            const message = await response.text();
+            showSnackbar(JSON.parse(message).detail || 'Failed to edit snap.', 'error');
+          }
           setLoadingEditModal(false);
           setEditModalVisible(false);
           return;

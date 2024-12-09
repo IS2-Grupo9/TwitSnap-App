@@ -20,8 +20,7 @@ export default function CreateSnapModal({
 }: CreateSnapModalProps) {
     const { auth, logout } = useAuth();
     
-    const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL
-    const postsApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
+    const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
 
     const [newSnapMessage, setNewSnapMessage] = useState('');
     const [isPrivate, setIsPrivate] = useState(auth.user?.private || false);
@@ -45,10 +44,11 @@ export default function CreateSnapModal({
         }
   
         const id = String(auth.user?.id || '');
-        const response = await fetch(`${postsApiUrl}/snaps`, {
+        const response = await fetch(`${apiUrl}/posts/snaps`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.token}`,
           },
           body: JSON.stringify({ 
             user: id,
@@ -58,8 +58,13 @@ export default function CreateSnapModal({
         });
   
         if (!response.ok) {
-          const message = await response.text();
-          showSnackbar(JSON.parse(message).detail || 'Failed to create snap.', 'error');
+          if (response.status === 401) {
+            showSnackbar('Session expired. Please log in again.', 'error');
+            logout();
+          } else {
+            const message = await response.text();
+            showSnackbar(JSON.parse(message).detail || 'Failed to create snap.', 'error');
+          }
           setLoadingCreateModal(false);
           setCreateModalVisible(false);
           return;

@@ -17,7 +17,6 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
   const { auth, logout } = useAuth();
   const { userId } = useGlobalSearchParams<{ userId: string }>();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
-  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
   const [user, setUser] = useState<User>({
     id: 0,
     username: '',
@@ -88,24 +87,36 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
 
   const fetchFollowInfo = async () => {
     try {
-      const followsResponse = await fetch(`${interactionsApiUrl}/interactions/users/${userId}/follows`, {
+      const followsResponse = await fetch(`${apiUrl}/interactions/users/${userId}/follows`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!followsResponse.ok) {
-        showSnackbar('Failed to fetch follow data.', 'error');
+        if (followsResponse.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch follow data.', 'error');
+        }
         return;
       }
-      const followersResponse = await fetch(`${interactionsApiUrl}/interactions/users/${userId}/followers`, {
+      const followersResponse = await fetch(`${apiUrl}/interactions/users/${userId}/followers`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!followersResponse.ok) {
-        showSnackbar('Failed to fetch follow data.', 'error');
+        if (followersResponse.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch follow data.', 'error');
+        }
         return;
       }
       const followsData = await followsResponse.json();
@@ -170,10 +181,11 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
 
   const handleFollow = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/follow`, {
+      const response = await fetch(`${apiUrl}/interactions/follow`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
           follower_id: auth.user?.id.toString(),
@@ -184,7 +196,10 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
       if (response.ok) {
         setFollowingUser(true);
         showSnackbar('User followed.', 'success');
-      } else {
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
+      } else {      
         showSnackbar('Failed to follow user.', 'error');
       }
     } catch (error) {
@@ -194,10 +209,11 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
 
   const handleUnfollow = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/unfollow`, {
+      const response = await fetch(`${apiUrl}/interactions/unfollow`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
           follower_id: auth.user?.id.toString(),
@@ -208,6 +224,9 @@ export default function UserProfileScreen({ showSnackbar }: UserProfileScreenPro
       if (response.ok) {
         setFollowingUser(false);
         showSnackbar('User unfollowed.', 'success');
+      } else if (response.status === 401) {
+        showSnackbar('Session expired. Please log in again.', 'error');
+        logout();
       } else {
         showSnackbar('Failed to unfollow user.', 'error');
       }

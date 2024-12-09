@@ -18,9 +18,6 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
   const { auth, logout } = useAuth();
   const { snapId, creatorId } = useGlobalSearchParams<{ snapId: string, creatorId: string }>();
   const apiUrl = process.env.EXPO_PUBLIC_GATEWAY_URL;
-  const postApiUrl = process.env.EXPO_PUBLIC_POSTS_URL;
-  const interactionsApiUrl = process.env.EXPO_PUBLIC_INTERACTIONS_URL;
-  const statsApiUrl = process.env.EXPO_PUBLIC_STATISTICS_URL;
 
   const [snap, setSnap] = useState<ExtendedSnap | null>(null);
   const [likeCount, setLikeCount] = useState<number | null>(null);
@@ -100,15 +97,21 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
     const method = liked ? 'DELETE' : 'POST';
     const action = liked ? 'unlike' : 'like';
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/${action}`, {
+      const response = await fetch(`${apiUrl}/interactions/${action}`, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({ user_id: auth.user?.id.toString(), post_id: snapId.toString() }),
       });
       if (!response.ok) {
-        showSnackbar(`Failed to ${action} snap.`, 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar(`Failed to ${action} snap.`, 'error');
+        }
         return;
       }
       loadSnap();
@@ -123,10 +126,11 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
     const method = shared ? 'DELETE' : 'POST';
     const action = shared ? 'unshare' : 'share';
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/${action}`, {
+      const response = await fetch(`${apiUrl}/interactions/${action}`, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
           original_user_id: userId.toString(),
@@ -135,7 +139,12 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
         }),
       });
       if (!response.ok) {
-        showSnackbar(`Failed to ${action} snap.`, 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar(`Failed to ${action} snap.`, 'error');
+        }
         return;
       }
       loadSnap();
@@ -160,14 +169,20 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
 
   const fetchLiked = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/likes`, {
+      const response = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/likes`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch liked snaps.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch liked snaps.', 'error');
+        }
         return false;
       }
       const likedSnaps = await response.json();
@@ -181,14 +196,20 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
 
   const fetchShared = async () => {
     try {
-      const response = await fetch(`${interactionsApiUrl}/interactions/users/${auth.user?.id}/shares`, {
+      const response = await fetch(`${apiUrl}/interactions/users/${auth.user?.id}/shares`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch shared snaps.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch shared snaps.', 'error');
+        }
         return false;
       }
       const shares = await response.json();
@@ -202,13 +223,18 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${statsApiUrl}/statistics/posts/${snapId}/creator/${creatorId}/viewer/${auth.user?.id}`, {
+      const response = await fetch(`${apiUrl}/statistics/posts/${snapId}/creator/${creatorId}/viewer/${auth.user?.id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        }
         return;
       }
       const likes = await response.json();
@@ -222,14 +248,20 @@ export default function SnapScreen({ showSnackbar }: SnapScreenProps) {
   const loadSnap = async () => {
     try {
       if (!snapId) return;
-      const response = await fetch(`${postApiUrl}/snaps/${snapId}`, {
+      const response = await fetch(`${apiUrl}/posts/snaps/${snapId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
-        showSnackbar('Failed to fetch snap.', 'error');
+        if (response.status === 401) {
+          showSnackbar('Session expired. Please log in again.', 'error');
+          logout();
+        } else {
+          showSnackbar('Failed to fetch snap.', 'error');
+        }
         return;
       }
       const snap = (await response.json()).data;
