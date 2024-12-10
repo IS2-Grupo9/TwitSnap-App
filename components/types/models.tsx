@@ -64,3 +64,8 @@ export interface Notification {
     date: Date;
     read: boolean;
 }
+
+export interface Trend {
+    word: string;
+    count: number;
+}

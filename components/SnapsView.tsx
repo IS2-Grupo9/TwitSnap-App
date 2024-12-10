@@ -18,9 +18,10 @@ interface SnapsViewProps {
   favFeed?: boolean;
   userId?: string;
   searchType?: string;
+  externalSearchQuery?: string;
 }
 
-export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userId, searchType }: SnapsViewProps) {
+export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userId, searchType, externalSearchQuery }: SnapsViewProps) {
   const { auth, logout } = useAuth();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
@@ -264,9 +265,9 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     }
   }
 
-  const handleSearch = async () => {
+  const handleSearch = async (query: string) => {
     try {
-      const response = await fetch(`${apiUrl}/posts/search/${searchType}?${searchType}=${searchQuery}`, {
+      const response = await fetch(`${apiUrl}/posts/search/${searchType}?${searchType}=${query}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -492,7 +493,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     }
   };
 
-  const loadSnaps = async () => {
+  const loadSnaps = async (useExternal: boolean = false) => {
     setLoading(true);
     try {
       setOffset(0);
@@ -501,7 +502,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
         (userFeed ?
           await fetchProfileSnaps()
           : await fetchSnaps(0))
-        : await handleSearch();
+        : await handleSearch(useExternal && externalSearchQuery ? externalSearchQuery : searchQuery);
       if (fetchedSnaps.length === 0) {
         setSnaps([]);
         setLoading(false);
@@ -561,13 +562,20 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
     }
   }, []);
 
+  useEffect(() => {
+    if (externalSearchQuery && !feed) {
+      setSearchQuery(externalSearchQuery);
+      loadSnaps(true);
+    }
+  }, [externalSearchQuery]);
+
   return (
     <View style={feed ? styles.container : styles.tabContainer}>
       {!feed && (
         <PaperTextInput
         style={styles.input}
         value={searchQuery}
-        right={<PaperTextInput.Icon icon="magnify" onPress={loadSnaps} />}
+        right={<PaperTextInput.Icon icon="magnify" onPress={() => loadSnaps()} />}
         onChangeText={setSearchQuery}
         label={ searchType === 'text' ? 'Search Snaps' : 'Search Hashtag' }
         mode="outlined"
@@ -582,7 +590,7 @@ export default function SnapsView({ showSnackbar, feed, userFeed, favFeed, userI
             onSurfaceVariant: 'rgba(0, 0, 0, 0.5)',
           },
         }}
-        onSubmitEditing={loadSnaps}
+        onSubmitEditing={() => loadSnaps()}
         left={searchType === 'hashtag' ? <PaperTextInput.Affix text="#" /> : undefined}
       />
       )}
