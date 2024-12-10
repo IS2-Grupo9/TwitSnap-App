@@ -192,9 +192,9 @@ function TrendingSnaps({ showSnackbar, handleTrendPress }: TrendingSnapsProps) {
   const [trends, setTrends] = useState<Trend[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchTrending = async () => {
+  const fetchTrending = async (load: boolean = true) => {
     try {
-      setLoading(true);
+      if (load) setLoading(true);
       const response = await fetch(`${apiUrl}/posts/trending`, {
         method: 'GET',
         headers: {
@@ -227,6 +227,14 @@ function TrendingSnaps({ showSnackbar, handleTrendPress }: TrendingSnapsProps) {
     fetchTrending();
   }, []);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchTrending(false);
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
     <View style={styles.trendTabContainer}>
       {loading ? (
@@ -236,7 +244,7 @@ function TrendingSnaps({ showSnackbar, handleTrendPress }: TrendingSnapsProps) {
           refreshControl={
             <RefreshControl
               refreshing={loading}
-              onRefresh={fetchTrending}
+              onRefresh={() => fetchTrending()}
               colors={['#65558F']}
             />
           }
