@@ -3,7 +3,7 @@
 TwitSnap App is a React Native (Expo) mobile application developed as part of the “Ingeniería de Software II” (IS2) course at FIUBA.
 It serves as the frontend for the TwitSnap project, allowing users to interact with the platform through a modern mobile interface.
 
-For a detailed guide and documentation, visit:  
+For a detailed user guide, visit:  
 👉 [TwitSnap App Guide](https://is2-grupo9.github.io/twitsnap-app-guide/)
 
 ## Get started
